@@ -71,8 +71,8 @@ setup(
 
     url='https://github.com/timeplus-io/proton-python-driver',
 
-    author='Konstantin Lebedev',
-    author_email='kostyan.lebedev@gmail.com',
+    author='Gang Tao',
+    author_email='gang@timeplus.com',
 
     license='MIT',
 
