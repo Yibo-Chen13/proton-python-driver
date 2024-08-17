@@ -1,34 +1,34 @@
-Timeplus Proton Python Driver
+Timeplus Python Driver
 =============================
 
 Introduction
 ------------
 
-`Proton <https://github.com/timeplus-io/proton>`_ is a unified streaming and historical data processing engine in a single binary. The historical store is built based on `ClickHouse <https://github.com/ClickHouse/ClickHouse>`_.
+`Timeplus <https://github.com/timeplus-io/proton>`_ is a unified streaming and historical data processing engine in a single binary.
 
-This project provides python driver to interact with Proton, the code is based on https://github.com/mymarilyn/clickhouse-driver.  
+This project provides python driver to interact with Timeplus Proton or Timeplus Enterprise, the code is based on https://github.com/mymarilyn/clickhouse-driver.  
 
 
 Installation
 ------------
-Proton Python Driver currently supports the following versions of Python: 3.8, 3.9, 3.10, 3.11 and 3.12.
+Timeplus Python Driver currently supports the following versions of Python: 3.8, 3.9, 3.10, 3.11 and 3.12.
 
 Installing with pip
 We recommend creating a virtual environment when installing Python dependencies. For more information on setting up a virtual environment, see the `Python documentation <https://docs.python.org/3.9/tutorial/venv.html>`_.
 
 .. code-block:: shell
 
-   pip install proton-driver
+   pip install proton-driver --extra-index-url https://d.timeplus.com/simple/
 
 
 Quick Start
 ------------
 
-1. Run proton with docker. Make sure the port 8463 is exposed.
+1. Run Timeplus Proton with docker. Make sure the port 8463 is exposed.
 
 .. code-block:: shell
 
-  docker run -d -p 8463:8463 --pull always --name proton ghcr.io/timeplus-io/proton:latest
+  docker run -d -p 8463:8463 --pull always --name proton d.timeplus.com/timeplus-io/proton:latest
 
 2. Run following python code 
 
