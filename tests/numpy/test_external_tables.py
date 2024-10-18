@@ -12,7 +12,7 @@ class ExternalTablesTestCase(NumpyBaseTestCase):
     def test_select(self):
         tables = [{
             'name': 'test',
-            'structure': [('x', 'Int32'), ('y', 'String')],
+            'structure': [('x', 'int32'), ('y', 'string')],
             'data': pd.DataFrame({
                 'x': [100, 500],
                 'y': ['abc', 'def']
@@ -21,20 +21,20 @@ class ExternalTablesTestCase(NumpyBaseTestCase):
         rv = self.client.execute(
             'SELECT * FROM test', external_tables=tables, columnar=True
         )
-        self.assertArraysListEqual(
+        self.assertarraysListEqual(
             rv, [np.array([100, 500]), np.array(['abc', 'def'])]
         )
 
     def test_send_empty_table(self):
         tables = [{
             'name': 'test',
-            'structure': [('x', 'Int32')],
+            'structure': [('x', 'int32')],
             'data': pd.DataFrame({'x': []})
         }]
         rv = self.client.execute(
             'SELECT * FROM test', external_tables=tables, columnar=True
         )
-        self.assertArraysListEqual(rv, [])
+        self.assertarraysListEqual(rv, [])
 
     def test_send_empty_table_structure(self):
         tables = [{

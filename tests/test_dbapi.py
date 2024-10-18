@@ -53,7 +53,7 @@ class DBAPITestCase(DBAPITestCaseBase):
             cursor = connection.cursor()
             rv = cursor.execute('SELECT 1')
             self.assertIsNone(rv)
-            self.assertEqual(cursor.fetchall(), [(1, )])
+            self.assertEqual(cursor.fetchall(), [(1,)])
 
     def test_from_dsn(self):
         connection = connect(
@@ -117,7 +117,7 @@ class DBAPITestCase(DBAPITestCaseBase):
             self.assertEqual(cursor.fetchall(), [(0,), (1,), (2,), (3,)])
 
     def test_executemany(self):
-        with self.created_cursor() as cursor, self.create_table('a UInt32'):
+        with self.created_cursor() as cursor, self.create_stream('a uint32'):
             data = [(0, ), (1, ), (2, )]
             rv = cursor.executemany('INSERT INTO test VALUES', data)
             self.assertIsNone(rv, None)
@@ -135,19 +135,19 @@ class DBAPITestCase(DBAPITestCaseBase):
         with self.created_cursor(user='wrong_user') as cursor:
             with self.assertRaises(OperationalError) as e:
                 cursor.execute('SELECT 1')
-            code = 516 if self.server_version > (20, ) else 192
+            code = 516
             self.assertIn('Code: {}'.format(code), str(e.exception))
 
     def test_exception_executemany(self):
         with self.created_cursor(user='wrong_user') as cursor:
             with self.assertRaises(OperationalError) as e:
                 cursor.executemany('INSERT INTO test VALUES', [(0, )])
-            code = 516 if self.server_version > (20, ) else 192
+            code = 516
             self.assertIn('Code: {}'.format(code), str(e.exception))
             self.assertEqual(cursor.rowcount, -1)
 
     def test_rowcount_insert_from_select(self):
-        with self.created_cursor() as cursor, self.create_table('a UInt8'):
+        with self.created_cursor() as cursor, self.create_stream('a uint8'):
             cursor.execute(
                 'INSERT INTO test '
                 'SELECT number FROM system.numbers LIMIT 4'
@@ -155,18 +155,18 @@ class DBAPITestCase(DBAPITestCaseBase):
             self.assertEqual(cursor.rowcount, -1)
 
     def test_execute_insert(self):
-        with self.created_cursor() as cursor, self.create_table('a UInt8'):
+        with self.created_cursor() as cursor, self.create_stream('a uint8'):
             cursor.execute('INSERT INTO test VALUES', [[4]])
             self.assertEqual(cursor.rowcount, 1)
 
     def test_description(self):
         with self.created_cursor() as cursor:
             self.assertIsNone(cursor.description)
-            cursor.execute('SELECT CAST(1 AS UInt32) AS test')
+            cursor.execute('SELECT CAST(1 AS uint32) AS test')
             desc = cursor.description
             self.assertEqual(len(desc), 1)
             self.assertEqual(desc[0].name, 'test')
-            self.assertEqual(desc[0].type_code, 'UInt32')
+            self.assertEqual(desc[0].type_code, 'uint32')
 
     def test_pep249_sizes(self):
         with self.created_cursor() as cursor:
@@ -175,7 +175,7 @@ class DBAPITestCase(DBAPITestCaseBase):
 
     def test_ddl(self):
         with self.created_cursor() as cursor:
-            cursor.execute('DROP TABLE IF EXISTS test')
+            cursor.execute('DROP STREAM IF EXISTS test')
             self.assertEqual(cursor.fetchall(), [])
             self.assertEqual(cursor.rowcount, -1)
 
@@ -186,26 +186,26 @@ class DBAPITestCase(DBAPITestCaseBase):
         def side_getaddrinfo(host, *args, **kwargs):
             if host == 'wrong_host':
                 self.n_calls += 1
-                raise socket.error(-2, 'Name or service not known')
+                raise socket.error(-2, "Name or service not known")
             return getaddrinfo(host, *args, **kwargs)
 
-        with patch('socket.getaddrinfo') as mocked_getaddrinfo:
+        with patch("socket.getaddrinfo") as mocked_getaddrinfo:
             mocked_getaddrinfo.side_effect = side_getaddrinfo
 
             conn_kwargs = {
-                'host': 'wrong_host',
-                'port': 1234,
-                'alt_hosts': '{}:{}'.format(self.host, self.port)
+                "host": "wrong_host",
+                "port": 1234,
+                "alt_hosts": "{}:{}".format(self.host, self.port),
             }
             with self.created_connection(**conn_kwargs) as connection:
                 cursor = connection.cursor()
-                cursor.execute('SELECT 1')
-                self.assertEqual(cursor.fetchall(), [(1, )])
+                cursor.execute("SELECT 1")
+                self.assertEqual(cursor.fetchall(), [(1,)])
                 cursor.close()
 
                 cursor = connection.cursor()
-                cursor.execute('SELECT 1')
-                self.assertEqual(cursor.fetchall(), [(1, )])
+                cursor.execute("SELECT 1")
+                self.assertEqual(cursor.fetchall(), [(1,)])
                 cursor.close()
 
         # Last host must be remembered and getaddrinfo must call exactly
@@ -225,52 +225,52 @@ class StreamingTestCase(DBAPITestCaseBase):
     def test_fetchone(self):
         with self.created_cursor() as cursor:
             cursor.set_stream_results(True, 2)
-            cursor.execute('SELECT number FROM system.numbers LIMIT 4')
+            cursor.execute("SELECT number FROM system.numbers LIMIT 4")
 
             self.assertIsInstance(cursor._rows, types.GeneratorType)
 
-            self.assertEqual(cursor.fetchone(), (0, ))
-            self.assertEqual(cursor.fetchone(), (1, ))
-            self.assertEqual(cursor.fetchone(), (2, ))
-            self.assertEqual(cursor.fetchone(), (3, ))
+            self.assertEqual(cursor.fetchone(), (0,))
+            self.assertEqual(cursor.fetchone(), (1,))
+            self.assertEqual(cursor.fetchone(), (2,))
+            self.assertEqual(cursor.fetchone(), (3,))
             self.assertEqual(cursor.fetchone(), None)
 
     def test_fetchmany(self):
         with self.created_cursor() as cursor:
             cursor.set_stream_results(True, 2)
-            cursor.execute('SELECT number FROM system.numbers LIMIT 4')
+            cursor.execute("SELECT number FROM system.numbers LIMIT 4")
 
             self.assertIsInstance(cursor._rows, types.GeneratorType)
-            self.assertEqual(cursor.fetchmany(), [(0, )])
-            self.assertEqual(cursor.fetchmany(None), [(1, )])
+            self.assertEqual(cursor.fetchmany(), [(0,)])
+            self.assertEqual(cursor.fetchmany(None), [(1,)])
             self.assertEqual(cursor.fetchmany(0), [])
-            self.assertEqual(cursor.fetchmany(-1), [(2, ), (3, )])
+            self.assertEqual(cursor.fetchmany(-1), [(2,), (3,)])
 
-            cursor.execute('SELECT number FROM system.numbers LIMIT 4')
-            self.assertEqual(cursor.fetchmany(1), [(0, )])
-            self.assertEqual(cursor.fetchmany(2), [(1, ), (2, )])
-            self.assertEqual(cursor.fetchmany(3), [(3, )])
+            cursor.execute("SELECT number FROM system.numbers LIMIT 4")
+            self.assertEqual(cursor.fetchmany(1), [(0,)])
+            self.assertEqual(cursor.fetchmany(2), [(1,), (2,)])
+            self.assertEqual(cursor.fetchmany(3), [(3,)])
             self.assertEqual(cursor.fetchmany(3), [])
 
     def test_fetchall(self):
         with self.created_cursor() as cursor:
             cursor.set_stream_results(True, 2)
 
-            cursor.execute('SELECT number FROM system.numbers LIMIT 4')
+            cursor.execute("SELECT number FROM system.numbers LIMIT 4")
             # Check rowcount before and after fetch.
             self.assertEqual(cursor.rowcount, -1)
-            self.assertEqual(cursor.fetchall(), [(0, ), (1, ), (2, ), (3, )])
+            self.assertEqual(cursor.fetchall(), [(0,), (1,), (2,), (3,)])
             self.assertEqual(cursor.rowcount, -1)
 
 
 class ReprTestCase(DBAPITestCaseBase):
     def test_cursor_repr(self):
         with self.created_cursor() as cursor:
-            self.assertIn('closed: False', str(cursor))
+            self.assertIn("closed: False", str(cursor))
 
     def test_connection_repr(self):
         with self.created_connection() as conn:
-            self.assertIn('closed: False', str(conn))
+            self.assertIn("closed: False", str(conn))
 
 
 class ExtrasTestCase(DBAPITestCaseBase):
@@ -278,76 +278,76 @@ class ExtrasTestCase(DBAPITestCaseBase):
         with self.created_cursor() as cursor:
             self.assertIsNone(cursor.columns_with_types)
             cursor.execute(
-                'SELECT CAST(number AS UInt64) AS x '
-                'FROM system.numbers LIMIT 4'
+                "SELECT CAST(number AS uint64) AS x "
+                "FROM system.numbers LIMIT 4"
             )
             cursor.fetchall()
-            self.assertEqual(cursor.columns_with_types, [('x', 'UInt64')])
+            self.assertEqual(cursor.columns_with_types, [("x", "uint64")])
 
     def test_columns_with_types_insert(self):
-        with self.created_cursor() as cursor, self.create_table('a UInt8'):
-            cursor.executemany('INSERT INTO test (a) VALUES', [(123, )])
+        with self.created_cursor() as cursor, self.create_stream("a uint8"):
+            cursor.executemany("INSERT INTO test (a) VALUES", [(123,)])
             self.assertIsNone(cursor.columns_with_types)
 
     def test_columns_with_types_streaming(self):
         with self.created_cursor() as cursor:
             cursor.set_stream_results(True, 2)
             cursor.execute(
-                'SELECT CAST(number AS UInt64) AS x '
-                'FROM system.numbers LIMIT 4'
+                "SELECT CAST(number AS uint64) AS x "
+                "FROM system.numbers LIMIT 4"
             )
-            self.assertEqual(cursor.columns_with_types, [('x', 'UInt64')])
+            self.assertEqual(cursor.columns_with_types, [("x", "uint64")])
             list(cursor)
-            self.assertEqual(cursor.columns_with_types, [('x', 'UInt64')])
+            self.assertEqual(cursor.columns_with_types, [("x", "uint64")])
 
     def test_set_external_tables(self):
         with self.created_cursor() as cursor:
-            data = [(0, ), (1, ), (2, )]
-            cursor.set_external_table('table1', [('x', 'UInt32')], data)
-            cursor.execute('SELECT * FROM table1')
+            data = [(0,), (1,), (2,)]
+            cursor.set_external_table("table1", [("x", "uint32")], data)
+            cursor.execute("SELECT * FROM table1")
             self.assertEqual(cursor.fetchall(), data)
 
     def test_settings(self):
         with self.created_cursor() as cursor:
-            cursor.set_settings({'max_threads': 100500})
+            cursor.set_settings({"max_threads": 100500})
 
             cursor.execute(
                 "SELECT name, value, changed FROM system.settings "
                 "WHERE name = 'max_threads'",
             )
-            self.assertEqual(cursor.fetchall(), [('max_threads', '100500', 1)])
+            self.assertEqual(cursor.fetchall(), [("max_threads", "100500", 1)])
 
     def test_set_query_id(self):
         with self.created_cursor() as cursor:
-            query_id = 'my_query_id'
+            query_id = "my_query_id"
             cursor.set_query_id(query_id)
             cursor.execute(
-                'SELECT query_id '
-                'FROM system.processes '
-                'WHERE query_id = %(query_id)s',
-                {'query_id': query_id}
+                "SELECT query_id "
+                "FROM system.processes "
+                "WHERE query_id = %(query_id)s",
+                {"query_id": query_id},
             )
-            self.assertEqual(cursor.fetchall(), [(query_id, )])
+            self.assertEqual(cursor.fetchall(), [(query_id,)])
 
     def test_types_check(self):
-        with self.created_cursor() as cursor, self.create_table('a UInt8'):
+        with self.created_cursor() as cursor, self.create_stream("a uint8"):
             cursor.set_types_check(True)
 
-            data = [(300, )]
-            cursor.executemany('INSERT INTO test (a) VALUES', data)
-            cursor.execute('SELECT * FROM test')
-            self.assertEqual(cursor.fetchall(), [(44, )])
+            data = [(300,)]
+            cursor.executemany("INSERT INTO test (a) VALUES", data)
+            cursor.execute("SELECT * FROM test")
+            self.assertEqual(cursor.fetchall(), [(44,)])
 
     def test_cursor_iteration(self):
         with self.created_cursor() as cursor:
-            cursor.execute('SELECT number FROM system.numbers LIMIT 4')
+            cursor.execute("SELECT number FROM system.numbers LIMIT 4")
             self.assertEqual(list(cursor), [(0,), (1,), (2,), (3,)])
 
     def test_context_managers(self):
         with self.create_connection() as connection:
             with connection.cursor() as cursor:
-                cursor.execute('SELECT 1')
-                self.assertEqual(cursor.fetchall(), [(1, )])
+                cursor.execute("SELECT 1")
+                self.assertEqual(cursor.fetchall(), [(1,)])
 
 
 class InterfaceTestCase(DBAPITestCaseBase):
@@ -355,8 +355,8 @@ class InterfaceTestCase(DBAPITestCaseBase):
         with self.created_cursor() as cursor:
             cursor.close()
             with self.assertRaises(InterfaceError) as e:
-                cursor.execute('SELECT 1')
-            self.assertEqual(str(e.exception), 'cursor already closed')
+                cursor.execute("SELECT 1")
+            self.assertEqual(str(e.exception), "cursor already closed")
 
     def test_create_cursor_on_closed_connection(self):
         connection = self.create_connection()
@@ -364,80 +364,81 @@ class InterfaceTestCase(DBAPITestCaseBase):
 
         with self.assertRaises(InterfaceError) as e:
             connection.cursor()
-            self.assertEqual(str(e.exception), 'connection already closed')
+            self.assertEqual(str(e.exception), "connection already closed")
 
     def test_execute_fetch_before_query(self):
         with self.created_cursor() as cursor:
             with self.assertRaises(ProgrammingError) as e:
                 cursor.fetchall()
-            self.assertEqual(str(e.exception), 'no results to fetch')
+            self.assertEqual(str(e.exception), "no results to fetch")
 
 
 class DictCursorFactoryTestCase(DBAPITestCaseBase):
     def test_execute_fetchone(self):
-        cursor_kwargs = {'cursor_factory': DictCursor}
+        cursor_kwargs = {"cursor_factory": DictCursor}
 
         with self.created_cursor(cursor_kwargs=cursor_kwargs) as cursor:
-            cursor.execute('SELECT number FROM system.numbers LIMIT 4')
+            cursor.execute("SELECT number FROM system.numbers LIMIT 4")
 
             self.assertIsInstance(cursor._rows, list)
-            self.assertEqual(cursor.fetchone(), {'number': 0})
-            self.assertEqual(cursor.fetchone(), {'number': 1})
-            self.assertEqual(cursor.fetchone(), {'number': 2})
-            self.assertEqual(cursor.fetchone(), {'number': 3})
+            self.assertEqual(cursor.fetchone(), {"number": 0})
+            self.assertEqual(cursor.fetchone(), {"number": 1})
+            self.assertEqual(cursor.fetchone(), {"number": 2})
+            self.assertEqual(cursor.fetchone(), {"number": 3})
             self.assertEqual(cursor.fetchone(), None)
 
     def test_execute_fetchmany(self):
-        cursor_kwargs = {'cursor_factory': DictCursor}
+        cursor_kwargs = {"cursor_factory": DictCursor}
 
         with self.created_cursor(cursor_kwargs=cursor_kwargs) as cursor:
-            cursor.execute('SELECT number FROM system.numbers LIMIT 4')
+            cursor.execute("SELECT number FROM system.numbers LIMIT 4")
 
             self.assertIsInstance(cursor._rows, list)
-            self.assertEqual(cursor.fetchmany(), [{'number': 0}])
-            self.assertEqual(cursor.fetchmany(None), [{'number': 1}])
+            self.assertEqual(cursor.fetchmany(), [{"number": 0}])
+            self.assertEqual(cursor.fetchmany(None), [{"number": 1}])
             self.assertEqual(cursor.fetchmany(0), [])
             self.assertEqual(
-                cursor.fetchmany(-1), [{'number': 2}, {'number': 3}]
+                cursor.fetchmany(-1), [{"number": 2}, {"number": 3}]
             )
 
-            cursor.execute('SELECT number FROM system.numbers LIMIT 4')
-            self.assertEqual(cursor.fetchmany(1), [{'number': 0}])
+            cursor.execute("SELECT number FROM system.numbers LIMIT 4")
+            self.assertEqual(cursor.fetchmany(1), [{"number": 0}])
             self.assertEqual(
-                cursor.fetchmany(2), [{'number': 1}, {'number': 2}]
+                cursor.fetchmany(2), [{"number": 1}, {"number": 2}]
             )
-            self.assertEqual(cursor.fetchmany(3), [{'number': 3}])
+            self.assertEqual(cursor.fetchmany(3), [{"number": 3}])
             self.assertEqual(cursor.fetchmany(3), [])
 
             cursor.arraysize = 2
-            cursor.execute('SELECT number FROM system.numbers LIMIT 4')
+            cursor.execute("SELECT number FROM system.numbers LIMIT 4")
             self.assertEqual(
-                cursor.fetchmany(), [{'number': 0}, {'number': 1}])
+                cursor.fetchmany(), [{"number": 0}, {"number": 1}]
+            )
             self.assertEqual(
-                cursor.fetchmany(), [{'number': 2}, {'number': 3}]
+                cursor.fetchmany(), [{"number": 2}, {"number": 3}]
             )
 
     def test_execute_fetchall(self):
-        cursor_kwargs = {'cursor_factory': DictCursor}
+        cursor_kwargs = {"cursor_factory": DictCursor}
 
         with self.created_cursor(cursor_kwargs=cursor_kwargs) as cursor:
-            cursor.execute('SELECT number FROM system.numbers LIMIT 4')
+            cursor.execute("SELECT number FROM system.numbers LIMIT 4")
             self.assertEqual(cursor.rowcount, 4)
             self.assertEqual(
-                cursor.fetchall(), [
-                    {'number': 0}, {'number': 1}, {'number': 2}, {'number': 3}
-                ])
+                cursor.fetchall(),
+                [{"number": 0}, {"number": 1}, {"number": 2}, {"number": 3}],
+            )
 
 
 class NamedTupleCursorFactoryTestCase(DBAPITestCaseBase):
     def test_execute_fetchone(self):
-        cursor_kwargs = {'cursor_factory': NamedTupleCursor}
+        cursor_kwargs = {"cursor_factory": NamedTupleCursor}
 
         with self.created_cursor(cursor_kwargs=cursor_kwargs) as cursor:
-            cursor.execute('SELECT number FROM system.numbers LIMIT 4')
+            cursor.execute("SELECT number FROM system.numbers LIMIT 4")
 
             self.assertIsInstance(cursor._rows, list)
-            nt = namedtuple('Record', cursor._columns)
+            nt = namedtuple("Record", cursor._columns)
 
             self.assertEqual(cursor.fetchone(), nt(0))
             self.assertEqual(cursor.fetchone(), nt(1))
@@ -446,51 +447,51 @@ class NamedTupleCursorFactoryTestCase(DBAPITestCaseBase):
             self.assertEqual(cursor.fetchone(), None)
 
     def test_execute_fetchmany(self):
-        cursor_kwargs = {'cursor_factory': NamedTupleCursor}
+        cursor_kwargs = {"cursor_factory": NamedTupleCursor}
 
         with self.created_cursor(cursor_kwargs=cursor_kwargs) as cursor:
-            cursor.execute('SELECT number FROM system.numbers LIMIT 4')
+            cursor.execute("SELECT number FROM system.numbers LIMIT 4")
 
             self.assertIsInstance(cursor._rows, list)
-            nt = namedtuple('Record', cursor._columns)
+            nt = namedtuple("Record", cursor._columns)
 
             self.assertEqual(cursor.fetchmany(), [nt(0)])
             self.assertEqual(cursor.fetchmany(None), [nt(1)])
             self.assertEqual(cursor.fetchmany(0), [])
             self.assertEqual(cursor.fetchmany(-1), [nt(2), nt(3)])
 
-            cursor.execute('SELECT number FROM system.numbers LIMIT 4')
+            cursor.execute("SELECT number FROM system.numbers LIMIT 4")
             self.assertEqual(cursor.fetchmany(1), [nt(0)])
             self.assertEqual(cursor.fetchmany(2), [nt(1), nt(2)])
             self.assertEqual(cursor.fetchmany(3), [nt(3)])
             self.assertEqual(cursor.fetchmany(3), [])
 
             cursor.arraysize = 2
-            cursor.execute('SELECT number FROM system.numbers LIMIT 4')
+            cursor.execute("SELECT number FROM system.numbers LIMIT 4")
             self.assertEqual(cursor.fetchmany(), [nt(0), nt(1)])
             self.assertEqual(cursor.fetchmany(), [nt(2), nt(3)])
 
     def test_execute_fetchall(self):
-        cursor_kwargs = {'cursor_factory': NamedTupleCursor}
+        cursor_kwargs = {"cursor_factory": NamedTupleCursor}
 
         with self.created_cursor(cursor_kwargs=cursor_kwargs) as cursor:
-            cursor.execute('SELECT number FROM system.numbers LIMIT 4')
+            cursor.execute("SELECT number FROM system.numbers LIMIT 4")
             self.assertEqual(cursor.rowcount, 4)
-            nt = namedtuple('Record', cursor._columns)
+            nt = namedtuple("Record", cursor._columns)
 
             self.assertEqual(cursor.fetchall(), [nt(0), nt(1), nt(2), nt(3)])
 
     def test_make_nt_caching(self):
-        cursor_kwargs = {'cursor_factory': NamedTupleCursor}
+        cursor_kwargs = {"cursor_factory": NamedTupleCursor}
 
         with self.created_cursor(cursor_kwargs=cursor_kwargs) as cursor:
-            cursor.execute('SELECT number FROM system.numbers LIMIT 4')
+            cursor.execute("SELECT number FROM system.numbers LIMIT 4")
 
             self.assertIsInstance(cursor._rows, list)
-            nt = namedtuple('Record', cursor._columns)
+            nt = namedtuple("Record", cursor._columns)
 
             self.assertEqual(cursor.fetchone(), nt(0))
 
-            with patch('proton_driver.dbapi.extras.namedtuple') as nt_mock:
+            with patch("proton_driver.dbapi.extras.namedtuple") as nt_mock:
                 nt_mock.side_effect = ValueError
                 self.assertEqual(cursor.fetchone(), nt(1))

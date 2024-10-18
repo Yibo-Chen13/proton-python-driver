@@ -19,11 +19,13 @@ class HNSource(SimplePollingSource):
     def next_item(self):
         return (
             "GLOBAL_ID",
-            requests.get("https://hacker-news.firebaseio.com/v0/maxitem.json").json(),
+            requests.get(
+                "https://hacker-news.firebaseio.com/v0/maxitem.json"
+            ).json(),
         )
 
 
-def get_id_stream(old_max_id, new_max_id) -> Tuple[str,list]:
+def get_id_stream(old_max_id, new_max_id) -> Tuple[str, list]:
     if old_max_id is None:
         # Get the last 150 items on the first run.
         old_max_id = new_max_id - 150
@@ -51,12 +53,7 @@ def recurse_tree(metadata, og_metadata=None) -> any:
         parent_metadata = download_metadata(parent_id)
         return recurse_tree(parent_metadata[1], og_metadata)
     except KeyError:
-        return (metadata["id"], 
-                {
-                    **og_metadata, 
-                    "root_id":metadata["id"]
-                }
-                )
+        return (metadata["id"], {**og_metadata, "root_id": metadata["id"]})
 
 
 def key_on_parent(key__metadata) -> tuple:
@@ -68,13 +65,18 @@ def format(id__metadata):
     id, metadata = id__metadata
     return json.dumps(metadata)
 
+
 flow = Dataflow("hn_scraper")
 max_id = op.input("in", flow, HNSource(timedelta(seconds=15)))
-id_stream = op.stateful_map("range", max_id, lambda: None, get_id_stream).then(
-    op.flat_map, "strip_key_flatten", lambda key_ids: key_ids[1]).then(
-    op.redistribute, "redist")
+id_stream = (
+    op.stateful_map("range", max_id, lambda: None, get_id_stream)
+    .then(op.flat_map, "strip_key_flatten", lambda key_ids: key_ids[1])
+    .then(op.redistribute, "redist")
+)
 id_stream = op.filter_map("meta_download", id_stream, download_metadata)
-split_stream = op.branch("split_comments", id_stream, lambda item: item[1]["type"] == "story")
+split_stream = op.branch(
+    "split_comments", id_stream, lambda item: item[1]["type"] == "story"
+)
 story_stream = split_stream.trues
 story_stream = op.map("format_stories", story_stream, format)
 comment_stream = split_stream.falses
@@ -82,5 +84,13 @@ comment_stream = op.map("key_on_parent", comment_stream, key_on_parent)
 comment_stream = op.map("format_comments", comment_stream, format)
 op.inspect("stories", story_stream)
 op.inspect("comments", comment_stream)
-op.output("stories-out", story_stream, ProtonSink("hn_stories_raw", os.environ.get("PROTON_HOST","127.0.0.1")))
-op.output("comments-out", comment_stream, ProtonSink("hn_comments_raw", os.environ.get("PROTON_HOST","127.0.0.1")))
+op.output(
+    "stories-out",
+    story_stream,
+    ProtonSink("hn_stories_raw", os.environ.get("PROTON_HOST", "127.0.0.1")),
+)
+op.output(
+    "comments-out",
+    comment_stream,
+    ProtonSink("hn_comments_raw", os.environ.get("PROTON_HOST", "127.0.0.1")),
+)

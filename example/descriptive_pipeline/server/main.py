@@ -1,4 +1,11 @@
-from fastapi import FastAPI, WebSocket, HTTPException, WebSocketDisconnect, Request, BackgroundTasks
+from fastapi import (
+    FastAPI,
+    WebSocket,
+    HTTPException,
+    WebSocketDisconnect,
+    Request,
+    BackgroundTasks,
+)
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 import yaml
@@ -10,6 +17,7 @@ import json
 from proton_driver import client
 
 from .utils.logging import getLogger
+
 logger = getLogger()
 
 
@@ -58,7 +66,11 @@ class ConfigManager:
         return False
 
     def delete_pipeline(self, name):
-        updated_pipelines = [pipeline for pipeline in self.config.pipelines if pipeline.name != name]
+        updated_pipelines = [
+            pipeline
+            for pipeline in self.config.pipelines
+            if pipeline.name != name
+        ]
         self.config.pipelines = updated_pipelines
         self.save()
 
@@ -73,11 +85,13 @@ class ConfigManager:
             yaml.dump(self.config, yaml_file)
 
     def run_pipeline(self, name):
-        proton_client = client.Client(host=self.config.host,
-                                      port=self.config.port,
-                                      database=self.config.db,
-                                      user=self.config.user,
-                                      password=self.config.password)
+        proton_client = client.Client(
+            host=self.config.host,
+            port=self.config.port,
+            database=self.config.db,
+            user=self.config.user,
+            password=self.config.password,
+        )
         pipeline = self.get_pipeline_by_name(name)
         if pipeline is not None:
             for query in pipeline.sqls[:-1]:
@@ -93,7 +107,7 @@ class ConfigManager:
         return self.config
 
 
-class Query():
+class Query:
     def __init__(self, sql, client):
         self.sql = sql
         self.lock = threading.Lock()
@@ -198,7 +212,7 @@ async def query_stream(name, request, background_tasks):
     async def check_disconnect():
         while True:
             await asyncio.sleep(1)
-            disconnected = await request.is_disconnected();
+            disconnected = await request.is_disconnected()
             if disconnected:
                 query.cancel()
                 logger.info('Client disconnected')
@@ -215,28 +229,35 @@ async def query_stream(name, request, background_tasks):
                 result = {}
                 for index, (name, t) in enumerate(header):
                     if t.startswith('date'):
-                        result[name] = str(m[index]) # convert datetime type to string
+                        result[name] = str(
+                            m[index]
+                        )  # convert datetime type to string
                     else:
                         result[name] = m[index]
                 result_str = json.dumps(result).encode("utf-8") + b"\n"
                 yield result_str
             except Exception as e:
                 query.cancel()
-                logger.info(f'query cancelled due to {e}' )
+                logger.info(f'query cancelled due to {e}')
                 break
-        
+
         if query.is_finshed():
             break
 
         await asyncio.sleep(0.1)
-        
+
 
 @app.get("/queries/{name}")
-def query_pipeline(name: str, request: Request , background_tasks: BackgroundTasks):
+def query_pipeline(
+    name: str, request: Request, background_tasks: BackgroundTasks
+):
     if not config_manager.pipeline_exist(name):
         raise HTTPException(status_code=404, detail="pipeline not found")
 
-    return StreamingResponse(query_stream(name, request, background_tasks), media_type="application/json")
+    return StreamingResponse(
+        query_stream(name, request, background_tasks),
+        media_type="application/json",
+    )
 
 
 @app.websocket("/queries/{name}")
@@ -258,10 +279,12 @@ async def websocket_endpoint(name: str, websocket: WebSocket):
                     result = {}
                     for index, (name, t) in enumerate(header):
                         if t.startswith('date'):
-                            result[name] = str(m[index]) # convert datetime type to string
+                            result[name] = str(
+                                m[index]
+                            )  # convert datetime type to string
                         else:
                             result[name] = m[index]
-                    
+
                     await websocket.send_text(f'{json.dumps(result)}')
                 except Exception:
                     hasError = True
@@ -282,6 +305,7 @@ async def websocket_endpoint(name: str, websocket: WebSocket):
     except Exception as e:
         logger.exception(e)
     finally:
-        query.cancel()  # Ensure query cancellation even if an exception is raised
+        # Ensure query cancellation even if an exception is raised
+        query.cancel()
         await websocket.close()
         logger.debug('session closed')

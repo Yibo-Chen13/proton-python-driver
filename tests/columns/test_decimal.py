@@ -2,34 +2,27 @@ from decimal import Decimal
 
 from proton_driver import errors
 from tests.testcase import BaseTestCase
-from tests.util import require_server_version
 
 
 class DecimalTestCase(BaseTestCase):
-    required_server_version = (18, 12, 13)
-    stable_support_version = (18, 14, 9)
-    trailing_zeros_version = (21, 9)
 
-    def client_kwargs(self, version):
-        if version < self.stable_support_version:
-            return {'settings': {'allow_experimental_decimal_type': True}}
+    # Proton no such option:
+    # DB::Exception: Unrecognized option '--allow_experimental_decimal_type'.
+    # def client_kwargs(self, version):
+    #     return {'settings': {'allow_experimental_decimal_type': True}}
 
-    def cli_client_kwargs(self):
-        if self.stable_support_version > self.server_version:
-            return {'allow_experimental_decimal_type': 1}
+    # def cli_client_kwargs(self):
+    #     return {'allow_experimental_decimal_type': 1}
 
     def test_simple(self):
-        with self.create_table('a Decimal(9, 5)'):
+        with self.create_stream('a decimal(9, 5)'):
             data = [(Decimal('300.42'), ), (300.42, ), (-300, )]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data, types_check=True
             )
             query = 'SELECT * FROM test'
             inserted = self.emit_cli(query)
-            if self.server_version < self.trailing_zeros_version:
-                expected = '300.42000\n300.42000\n-300.00000\n'
-            else:
-                expected = '300.42\n300.42\n-300\n'
+            expected = '300.42\n300.42\n-300\n'
             self.assertEqual(inserted, expected)
             inserted = self.client.execute(query)
             self.assertEqual(inserted, [
@@ -38,11 +31,10 @@ class DecimalTestCase(BaseTestCase):
                 (Decimal('-300'), )
             ])
 
-    @require_server_version(18, 12, 17)
     def test_different_precisions(self):
-        columns = 'a Decimal32(2), b Decimal64(2), c Decimal128(2)'
+        columns = 'a decimal32(2), b decimal64(2), c decimal128(2)'
 
-        with self.create_table(columns):
+        with self.create_stream(columns):
             data = [(
                 Decimal('300.42'),
                 # 300.42 + (1 << 34)
@@ -57,7 +49,7 @@ class DecimalTestCase(BaseTestCase):
             # Casting to string saves precision.
             query = (
                 'SELECT '
-                'CAST(a AS String), CAST(b AS String), CAST(c AS String)'
+                'CAST(a AS string), CAST(b AS string), CAST(c AS string)'
                 'FROM test'
             )
             inserted = self.emit_cli(query)
@@ -71,11 +63,10 @@ class DecimalTestCase(BaseTestCase):
             inserted = self.client.execute('SELECT * FROM test')
             self.assertEqual(inserted, data)
 
-    @require_server_version(18, 12, 17)
     def test_different_precisions_negative(self):
-        columns = 'a Decimal32(2), b Decimal64(2), c Decimal128(2)'
+        columns = 'a decimal32(2), b decimal64(2), c decimal128(2)'
 
-        with self.create_table(columns):
+        with self.create_stream(columns):
             data = [(
                 Decimal('-300.42'),
                 # 300.42 + (1 << 34)
@@ -90,7 +81,7 @@ class DecimalTestCase(BaseTestCase):
             # Casting to string saves precision.
             query = (
                 'SELECT '
-                'CAST(a AS String), CAST(b AS String), CAST(c AS String)'
+                'CAST(a AS string), CAST(b AS string), CAST(c AS string)'
                 'FROM test'
             )
             inserted = self.emit_cli(query)
@@ -104,11 +95,10 @@ class DecimalTestCase(BaseTestCase):
             inserted = self.client.execute('SELECT * FROM test')
             self.assertEqual(inserted, data)
 
-    @require_server_version(18, 12, 17)
     def test_max_precisions(self):
-        columns = 'a Decimal32(0), b Decimal64(0), c Decimal128(0)'
+        columns = 'a decimal32(0), b decimal64(0), c decimal128(0)'
 
-        with self.create_table(columns):
+        with self.create_stream(columns):
             data = [(
                 Decimal(10**9 - 1),
                 Decimal(10**18 - 1),
@@ -139,7 +129,7 @@ class DecimalTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_nullable(self):
-        with self.create_table('a Nullable(Decimal32(3))'):
+        with self.create_stream('a nullable(decimal32(3))'):
             data = [(300.42, ), (None, )]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
@@ -147,17 +137,14 @@ class DecimalTestCase(BaseTestCase):
 
             query = 'SELECT * FROM test'
             inserted = self.emit_cli(query)
-            if self.server_version < self.trailing_zeros_version:
-                expected = '300.420\n\\N\n'
-            else:
-                expected = '300.42\n\\N\n'
+            expected = '300.42\n\\N\n'
             self.assertEqual(inserted, expected)
 
             inserted = self.client.execute(query)
             self.assertEqual(inserted, [(Decimal('300.42'), ), (None, ), ])
 
     def test_no_scale(self):
-        with self.create_table('a Decimal32(0)'):
+        with self.create_stream('a decimal32(0)'):
             data = [(2147483647, )]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
@@ -172,7 +159,7 @@ class DecimalTestCase(BaseTestCase):
 
     def test_type_mismatch(self):
         data = [(2147483649, )]
-        with self.create_table('a Decimal32(0)'):
+        with self.create_stream('a decimal32(0)'):
             with self.assertRaises(errors.TypeMismatchError) as e:
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', data, types_check=True
@@ -190,7 +177,7 @@ class DecimalTestCase(BaseTestCase):
     def test_preserve_precision(self):
         data = [(1.66, ), (1.15, )]
 
-        with self.create_table('a Decimal(18, 2)'):
+        with self.create_stream('a decimal(18, 2)'):
             self.client.execute('INSERT INTO test (a) VALUES', data)
             query = 'SELECT * FROM test'
             inserted = self.emit_cli(query)
@@ -204,14 +191,15 @@ class DecimalTestCase(BaseTestCase):
     def test_precision_one_sign_after_point(self):
         data = [(1.6, ), (1.0, ), (12312.0, ), (999999.6, )]
 
-        with self.create_table('a Decimal(8, 1)'):
+        with self.create_stream('a decimal(8, 1)'):
             self.client.execute('INSERT INTO test (a) VALUES', data)
             query = 'SELECT * FROM test'
             inserted = self.emit_cli(query)
-            if self.server_version < self.trailing_zeros_version:
-                expected = '1.6\n1.0\n12312.0\n999999.6\n'
-            else:
-                expected = '1.6\n1\n12312\n999999.6\n'
+            # if self.server_version < self.trailing_zeros_version:
+            #     expected = '1.6\n1.0\n12312.0\n999999.6\n'
+            # else:
+            #     expected = '1.6\n1\n12312\n999999.6\n'
+            expected = '1.6\n1\n12312\n999999.6\n'
             self.assertEqual(inserted, expected)
             inserted = self.client.execute(query)
             self.assertEqual(inserted, [
@@ -222,7 +210,7 @@ class DecimalTestCase(BaseTestCase):
             ])
 
     def test_truncates_scale(self):
-        with self.create_table('a Decimal(9, 4)'):
+        with self.create_stream('a decimal(9, 4)'):
             data = [(3.14159265358,), (2.7182,)]
             expected = [(Decimal('3.1415'),), (Decimal('2.7182'),)]
             self.client.execute(
@@ -236,13 +224,13 @@ class DecimalTestCase(BaseTestCase):
 
 
 class Decimal256TestCase(BaseTestCase):
-    required_server_version = (18, 12, 13)
+    # required_server_version = (18, 12, 13)
 
-    def cli_client_kwargs(self):
-        return {'allow_experimental_bigint_types': 1}
+    # def cli_client_kwargs(self):
+    #     return {'allow_experimental_bigint_types': 1}
 
-    @require_server_version(20, 9, 2)
-    def test_decimal256(self):
+    # @require_server_version(20, 9, 2)
+    def test_Decimal256(self):
         data = [
             (1.66, ),
             (1.15, ),
@@ -251,7 +239,7 @@ class Decimal256TestCase(BaseTestCase):
             (Decimal('-1606938044258990275541962092341162602522202993782792835301676.42'), )  # noqa: E501
         ]
 
-        with self.create_table('a Decimal256(2)'):
+        with self.create_stream('a decimal256(2)'):
             self.client.execute('INSERT INTO test (a) VALUES', data)
             query = 'SELECT * FROM test'
             inserted = self.emit_cli(query)

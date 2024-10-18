@@ -40,7 +40,7 @@ class BaseCompressionTestCase(BaseTestCase):
             )
 
     def run_simple(self):
-        with self.create_table('a Date, b DateTime'):
+        with self.create_stream('a Date, b DateTime'):
             data = [(date(2012, 10, 25), datetime(2012, 10, 25, 14, 7, 19))]
             self.client.execute(
                 'INSERT INTO test (a, b) VALUES', data
@@ -90,7 +90,7 @@ class ReadByBlocksTestCase(BaseCompressionTestCase):
     compression = 'lz4'
 
     def test(self):
-        with self.create_table('a Int32'):
+        with self.create_stream('a int32'):
             data = [(x % 200, ) for x in range(1000000)]
 
             self.client.execute(

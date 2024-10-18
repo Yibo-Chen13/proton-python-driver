@@ -14,13 +14,13 @@ class OtherColumnsTestCase(NumpyBaseTestCase):
         return get_column_by_spec(spec, {'context': ctx})
 
     @parameterized.expand([
-        ("Enum8('hello' = 1, 'world' = 2)", ),
-        ('Decimal(8, 4)', ),
-        ('Array(String)', ),
-        ('Tuple(String)', ),
-        ('SimpleAggregateFunction(any, Int32)', ),
-        ('Map(String, String)', ),
-        ('Array(LowCardinality(String))', )
+        ("enum8('hello' = 1, 'world' = 2)", ),
+        ('decimal(8, 4)', ),
+        ('array(string)', ),
+        ('tuple(string)', ),
+        ('simple_aggregate_function(any, int32)', ),
+        ('map(string, string)', ),
+        ('array(low_cardinality(string))', )
     ])
     def test_generic_type(self, spec):
         col = self.get_column(spec)

@@ -16,12 +16,12 @@ class ClientFromUrlTestCase(TestCase):
     def test_simple(self):
         c = Client.from_url('proton://host')
 
-        self.assertHostsEqual(c, [('host', 9000)])
+        self.assertHostsEqual(c, [('host', 8463)])
         self.assertEqual(c.connection.database, 'default')
 
         c = Client.from_url('proton://host/db')
 
-        self.assertHostsEqual(c, [('host', 9000)])
+        self.assertHostsEqual(c, [('host', 8463)])
         self.assertEqual(c.connection.database, 'db')
 
     def test_credentials(self):
@@ -58,7 +58,7 @@ class ClientFromUrlTestCase(TestCase):
 
     def test_port(self):
         c = Client.from_url('proton://host')
-        self.assertHostsEqual(c, [('host', 9000)])
+        self.assertHostsEqual(c, [('host', 8463)])
 
         c = Client.from_url('protons://host')
         self.assertHostsEqual(c, [('host', 9440)])
@@ -68,7 +68,7 @@ class ClientFromUrlTestCase(TestCase):
 
     def test_secure(self):
         c = Client.from_url('proton://host?secure=n')
-        self.assertHostsEqual(c, [('host', 9000)])
+        self.assertHostsEqual(c, [('host', 8463)])
         self.assertFalse(c.connection.secure_socket)
 
         c = Client.from_url('proton://host?secure=y')
@@ -201,10 +201,10 @@ class ClientFromUrlTestCase(TestCase):
 
     def test_alt_hosts(self):
         c = Client.from_url('proton://host?alt_hosts=host2:1234')
-        self.assertHostsEqual(c, [('host', 9000), ('host2', 1234)])
+        self.assertHostsEqual(c, [('host', 8463), ('host2', 1234)])
 
         c = Client.from_url('proton://host?alt_hosts=host2')
-        self.assertHostsEqual(c, [('host', 9000), ('host2', 9000)])
+        self.assertHostsEqual(c, [('host', 8463), ('host2', 8463)])
 
     def test_parameters_cast(self):
         c = Client.from_url('proton://host?insert_block_size=123')

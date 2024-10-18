@@ -8,24 +8,32 @@ if __name__ == "__main__":
 
     # setup the test stream
     c.execute("drop stream if exists test")
-    c.execute("""create stream test (
+    c.execute(
+        """create stream test (
                     year int16,
                     first_name string
-                )""")
+                )"""
+    )
     # add some data
-    df = pd.DataFrame.from_records([
-        {'year': 1994, 'first_name': 'Vova'},
-        {'year': 1995, 'first_name': 'Anja'},
-        {'year': 1996, 'first_name': 'Vasja'},
-        {'year': 1997, 'first_name': 'Petja'},
-    ])
+    df = pd.DataFrame.from_records(
+        [
+            {'year': 1994, 'first_name': 'Vova'},
+            {'year': 1995, 'first_name': 'Anja'},
+            {'year': 1996, 'first_name': 'Vasja'},
+            {'year': 1997, 'first_name': 'Petja'},
+        ]
+    )
     c.insert_dataframe(
         'INSERT INTO "test" (year, first_name) VALUES',
         df,
         settings=dict(use_numpy=True),
     )
-    # or c.execute("INSERT INTO test(year, first_name) VALUES", df.to_dict('records'))
-    time.sleep(3) # wait for 3 sec to make sure data available in historical store
+    # or c.execute(
+    # "INSERT INTO test(year, first_name) VALUES", df.to_dict('records')
+    # )
+    time.sleep(
+        3
+    )  # wait for 3 sec to make sure data available in historical store
 
     df = c.query_dataframe('SELECT * FROM table(test)')
     print(df)

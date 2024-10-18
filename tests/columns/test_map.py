@@ -2,17 +2,17 @@ from tests.testcase import BaseTestCase
 
 
 class MapTestCase(BaseTestCase):
-    required_server_version = (21, 1, 2)
+    # required_server_version = (21, 1, 2)
     # TODO: detect stable version
-    stable_support_version = (22, 14, 9)
+    # stable_support_version = (22, 14, 9)
 
-    def client_kwargs(self, version):
-        if version < self.stable_support_version:
-            return {'settings': {'allow_experimental_map_type': True}}
+    # def client_kwargs(self, version):
+    #     if version < self.stable_support_version:
+    #         return {'settings': {'allow_experimental_map_type': True}}
 
-    def cli_client_kwargs(self):
-        if self.stable_support_version > self.server_version:
-            return {'allow_experimental_map_type': 1}
+    # def cli_client_kwargs(self):
+    #     if self.stable_support_version > self.server_version:
+    #         return {'allow_experimental_map_type': 1}
 
     def _sorted_dicts(self, text):
         items = [
@@ -22,7 +22,7 @@ class MapTestCase(BaseTestCase):
         return '\n'.join(items) + '\n'
 
     def test_simple(self):
-        with self.create_table('a Map(String, UInt64)'):
+        with self.create_stream('a map(string, uint64)'):
             data = [
                 ({},),
                 ({'key1': 1}, ),
@@ -43,7 +43,7 @@ class MapTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     # def test_nullable(self):
-    #     with self.create_table('a Map(Nullable(String), Nullable(UInt64))'):
+    #     with self.create_table('a map(nullable(string), nullable(uint64))'):
     #         data = [
     #             ({},),
     #             ({None: None},),
@@ -62,7 +62,7 @@ class MapTestCase(BaseTestCase):
     #         self.assertEqual(inserted, data)
     #
     # def test_low_cardinality(self):
-    #     columns = 'a Map(LowCardinality(String), LowCardinality(UInt64))'
+    #     columns = 'a map(low_cardinality(string), low_cardinality(uint64))'
     #     with self.create_table(columns):
     #         data = [
     #             ({'key1': 1}, ),
@@ -82,8 +82,8 @@ class MapTestCase(BaseTestCase):
     #         self.assertEqual(inserted, data)
 
     def test_array(self):
-        columns = 'a Map(String, Array(UInt64))'
-        with self.create_table(columns):
+        columns = 'a map(string, array(uint64))'
+        with self.create_stream(columns):
             data = [
                 ({'key1': []}, ),
                 ({'key2': [1, 2, 3]}, ),

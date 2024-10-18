@@ -17,12 +17,12 @@ class B(IntEnum):
 class EnumTestCase(BaseTestCase):
     def test_simple(self):
         columns = (
-            "a Enum8('hello' = -1, 'world' = 2), "
-            "b Enum16('foo' = -300, 'bar' = 300)"
+            "a enum8('hello' = -1, 'world' = 2), "
+            "b enum16('foo' = -300, 'bar' = 300)"
         )
 
         data = [(A.hello, B.bar), (A.world, B.foo), (-1, 300), (2, -300)]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             self.client.execute(
                 'INSERT INTO test (a, b) VALUES', data
             )
@@ -47,9 +47,9 @@ class EnumTestCase(BaseTestCase):
             )
 
     def test_enum_by_string(self):
-        columns = "a Enum8('hello' = 1, 'world' = 2)"
+        columns = "a enum8('hello' = 1, 'world' = 2)"
         data = [('hello', ), ('world', )]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )
@@ -67,26 +67,26 @@ class EnumTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_errors(self):
-        columns = "a Enum8('test' = 1, 'me' = 2)"
+        columns = "a enum8('test' = 1, 'me' = 2)"
         data = [(A.world, )]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             with self.assertRaises(errors.LogicalError):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', data
                 )
 
-        columns = "a Enum8('test' = 1, 'me' = 2)"
+        columns = "a enum8('test' = 1, 'me' = 2)"
         data = [(3, )]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             with self.assertRaises(errors.LogicalError):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', data
                 )
 
     def test_quote_in_name(self):
-        columns = "a Enum8(' \\' t = ' = -1, 'test' = 2)"
+        columns = "a enum8(' \\' t = ' = -1, 'test' = 2)"
         data = [(-1, ), (" ' t = ", )]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )
@@ -104,9 +104,9 @@ class EnumTestCase(BaseTestCase):
             self.assertEqual(inserted, [(" ' t = ", ), (" ' t = ", )])
 
     def test_comma_and_space_in_name(self):
-        columns = "a Enum8('one' = 1, 'two_with_comma, ' = 2, 'three' = 3)"
+        columns = "a enum8('one' = 1, 'two_with_comma, ' = 2, 'three' = 3)"
         data = [(2, ), ('two_with_comma, ', )]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )
@@ -127,10 +127,10 @@ class EnumTestCase(BaseTestCase):
             )
 
     def test_nullable(self):
-        columns = "a Nullable(Enum8('hello' = -1, 'world' = 2))"
+        columns = "a nullable(enum8('hello' = -1, 'world' = 2))"
 
         data = [(None, ), (A.hello, ), (None, ), (A.world, )]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )

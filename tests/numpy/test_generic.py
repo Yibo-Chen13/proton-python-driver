@@ -1,5 +1,4 @@
 import types
-
 try:
     import numpy as np
     import pandas as pd
@@ -33,7 +32,7 @@ class GenericTestCase(NumpyBaseTestCase):
     def test_insert_not_supported(self):
         data = [np.array(range(self.n))]
 
-        with self.create_table('a Int32'):
+        with self.create_stream('a int32'):
             with self.assertRaises(ValueError) as e:
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', data
@@ -46,10 +45,10 @@ class GenericTestCase(NumpyBaseTestCase):
 
     def test_with_column_types(self):
         rv = self.client.execute(
-            'SELECT CAST(2 AS Int32) AS x', with_column_types=True
+            'SELECT CAST(2 AS int32) AS x', with_column_types=True
         )
 
-        self.assertEqual(rv, ([(2, )], [('x', 'Int32')]))
+        self.assertEqual(rv, ([(2, )], [('x', 'int32')]))
 
 
 class NumpyProgressTestCase(NumpyBaseTestCase):
@@ -57,7 +56,7 @@ class NumpyProgressTestCase(NumpyBaseTestCase):
         progress = self.client.execute_with_progress('SELECT 2')
         self.assertEqual(
             list(progress),
-            [(1, 0), (1, 0)] if self.server_version > (20,) else [(1, 0)]
+            [(1, 0), (1, 0)]
         )
         self.assertEqual(progress.get_result(), [(2,)])
         self.assertTrue(self.client.connection.connected)
@@ -79,7 +78,7 @@ class NumpyIteratorTestCase(NumpyBaseTestCase):
 
     def test_select_with_iter_with_column_types(self):
         result = self.client.execute_iter(
-            'SELECT CAST(number AS UInt32) as number '
+            'SELECT CAST(number AS uint32) as number '
             'FROM system.numbers LIMIT 10',
             with_column_types=True
         )
@@ -87,7 +86,7 @@ class NumpyIteratorTestCase(NumpyBaseTestCase):
 
         self.assertEqual(
             list(result),
-            [[('number', 'UInt32')]] + list(zip(range(10)))
+            [[('number', 'uint32')]] + list(zip(range(10)))
         )
         self.assertEqual(list(result), [])
 
@@ -95,7 +94,7 @@ class NumpyIteratorTestCase(NumpyBaseTestCase):
 class DataFrameTestCase(NumpyBaseTestCase):
     def test_query_simple(self):
         df = self.client.query_dataframe(
-            'SELECT CAST(number AS Int64) AS x FROM system.numbers LIMIT 100'
+            'SELECT CAST(number AS int64) AS x FROM system.numbers LIMIT 100'
         )
 
         self.assertTrue(df.equals(pd.DataFrame({'x': range(100)})))
@@ -114,14 +113,14 @@ class DataFrameTestCase(NumpyBaseTestCase):
             'b': [float(x) for x in range(n)]
         })
 
-        with self.create_table('a Int64, b Float64'):
+        with self.create_stream('a int64, b float64'):
             rv = self.client.insert_dataframe('INSERT INTO test VALUES', df)
             self.assertEqual(rv, n)
             df2 = self.client.query_dataframe('SELECT * FROM test ORDER BY a')
             self.assertTrue(df.equals(df2))
 
     def test_insert_chunking(self):
-        with self.create_table('a Int64'):
+        with self.create_stream('a int64'):
             rv = self.client.execute(
                 'INSERT INTO test VALUES', [np.array(range(3))], columnar=True,
                 settings={'insert_block_size': 1}
@@ -135,7 +134,7 @@ class DataFrameTestCase(NumpyBaseTestCase):
             'a': [str(x) for x in range(n)]
         })[['b', 'a']]
 
-        with self.create_table('a String, b Float64'):
+        with self.create_stream('a string, b float64'):
             rv = self.client.insert_dataframe(
                 'INSERT INTO test (a, b) VALUES', df
             )

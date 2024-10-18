@@ -6,7 +6,7 @@ class ExternalTablesTestCase(BaseTestCase):
     def test_select(self):
         tables = [{
             'name': 'test',
-            'structure': [('x', 'Int32'), ('y', 'Array(Int32)')],
+            'structure': [('x', 'int32'), ('y', 'array(int32)')],
             'data': [
                 {'x': 100, 'y': [2, 4, 6, 8]},
                 {'x': 500, 'y': [1, 3, 5, 7]},
@@ -18,7 +18,7 @@ class ExternalTablesTestCase(BaseTestCase):
     def test_send_empty_table(self):
         tables = [{
             'name': 'test',
-            'structure': [('x', 'Int32')],
+            'structure': [('x', 'int32')],
             'data': []
         }]
         rv = self.client.execute('SELECT * FROM test', external_tables=tables)

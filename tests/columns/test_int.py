@@ -1,11 +1,10 @@
 from tests.testcase import BaseTestCase
 from proton_driver import errors
-from tests.util import require_server_version
 
 
 class IntTestCase(BaseTestCase):
     def test_chop_to_type(self):
-        with self.create_table('a UInt8'):
+        with self.create_stream('a uint8'):
             data = [(300, )]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data, types_check=True
@@ -17,7 +16,7 @@ class IntTestCase(BaseTestCase):
             inserted = self.client.execute(query)
             self.assertEqual(inserted, [(44, )])
 
-        with self.create_table('a Int8'):
+        with self.create_stream('a int8'):
             data = [(-300,)]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data, types_check=True
@@ -30,7 +29,7 @@ class IntTestCase(BaseTestCase):
             self.assertEqual(inserted, [(-44, )])
 
     def test_raise_struct_error(self):
-        with self.create_table('a UInt8'):
+        with self.create_stream('a uint8'):
             with self.assertRaises(errors.TypeMismatchError) as e:
                 data = [(300, )]
                 self.client.execute(
@@ -43,7 +42,7 @@ class IntTestCase(BaseTestCase):
 
     def test_uint_type_mismatch(self):
         data = [(-1, )]
-        with self.create_table('a UInt8'):
+        with self.create_stream('a uint8'):
             with self.assertRaises(errors.TypeMismatchError) as e:
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', data, types_check=True
@@ -60,15 +59,15 @@ class IntTestCase(BaseTestCase):
 
     def test_all_sizes(self):
         columns = (
-            'a Int8, b Int16, c Int32, d Int64, '
-            'e UInt8, f UInt16, g UInt32, h UInt64'
+            'a int8, b int16, c int32, d int64, '
+            'e uint8, f uint16, g uint32, h uint64'
         )
 
         data = [
             (-10, -300, -123581321, -123581321345589144,
              10, 300, 123581321, 123581321345589144)
         ]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             self.client.execute(
                 'INSERT INTO test (a, b, c, d, e, f, g, h) VALUES', data
             )
@@ -87,8 +86,8 @@ class IntTestCase(BaseTestCase):
 
     def test_corner_cases(self):
         columns = (
-            'a Int8, b Int16, c Int32, d Int64, '
-            'e UInt8, f UInt16, g UInt32, h UInt64'
+            'a int8, b int16, c int32, d int64, '
+            'e uint8, f uint16, g uint32, h uint64'
         )
 
         data = [
@@ -96,7 +95,7 @@ class IntTestCase(BaseTestCase):
              255, 65535, 4294967295, 18446744073709551615),
             (127, 32767, 2147483647, 9223372036854775807, 0, 0, 0, 0),
         ]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             self.client.execute(
                 'INSERT INTO test (a, b, c, d, e, f, g, h) VALUES', data
             )
@@ -115,7 +114,7 @@ class IntTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_nullable(self):
-        with self.create_table('a Nullable(Int32)'):
+        with self.create_stream('a nullable(int32)'):
             data = [(2, ), (None, ), (4, ), (None, ), (8, )]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
@@ -130,13 +129,13 @@ class IntTestCase(BaseTestCase):
 
 
 class BigIntTestCase(BaseTestCase):
-    required_server_version = (20, 8, 2)
+    # required_server_version = (20, 8, 2)
 
     def cli_client_kwargs(self):
         return {'allow_experimental_bigint_types': 1}
 
     def test_int128(self):
-        with self.create_table('a Int128'):
+        with self.create_stream('a int128'):
             data = [
                 (-170141183460469231731687303715884105728, ),
                 (-111111111111111111111111111111111111111, ),
@@ -160,9 +159,9 @@ class BigIntTestCase(BaseTestCase):
             inserted = self.client.execute(query)
             self.assertEqual(inserted, data)
 
-    @require_server_version(21, 6)
+    # @require_server_version(21, 6)
     def test_uint128(self):
-        with self.create_table('a UInt128'):
+        with self.create_stream('a uint128'):
             data = [
                 (0, ),
                 (123, ),
@@ -183,7 +182,7 @@ class BigIntTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_int256(self):
-        with self.create_table('a Int256'):
+        with self.create_stream('a int256'):
             data = [
                 (-57896044618658097711785492504343953926634992332820282019728792003956564819968, ),  # noqa: E501
                 (-11111111111111111111111111111111111111111111111111111111111111111111111111111, ),  # noqa: E501
@@ -208,7 +207,7 @@ class BigIntTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_uint256(self):
-        with self.create_table('a UInt256'):
+        with self.create_stream('a uint256'):
             data = [
                 (0, ),
                 (123, ),
