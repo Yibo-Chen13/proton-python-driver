@@ -16,7 +16,7 @@ jobs:
         use-numpy:
           - 0
         python-version:
-          # - "3.5" ,In this old version, example have a syntax error:E999
+          - "3.5"
           - "3.6"
           - "3.7"
           - "3.8"
