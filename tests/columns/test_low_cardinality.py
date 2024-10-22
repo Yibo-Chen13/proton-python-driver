@@ -5,15 +5,16 @@ from tests.testcase import BaseTestCase
 
 
 class LowCardinalityTestCase(BaseTestCase):
-    required_server_version = (19, 3, 3)
-    stable_support_version = (19, 9, 2)
+    # required_server_version = (19, 3, 3)
+    # stable_support_version = (19, 9, 2)
 
     def cli_client_kwargs(self):
-        if self.server_version >= self.stable_support_version:
-            return {'allow_suspicious_low_cardinality_types': 1}
+        # if self.server_version >= self.stable_support_version:
+        #     return {'allow_suspicious_low_cardinality_types': 1}
+        return {'allow_suspicious_low_cardinality_types': 1}
 
     def test_uint8(self):
-        with self.create_table('a LowCardinality(UInt8)'):
+        with self.create_stream('a low_cardinality(uint8)'):
             data = [(x, ) for x in range(255)]
             self.client.execute('INSERT INTO test (a) VALUES', data)
 
@@ -28,7 +29,7 @@ class LowCardinalityTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_int8(self):
-        with self.create_table('a LowCardinality(Int8)'):
+        with self.create_stream('a low_cardinality(int8)'):
             data = [(x - 127, ) for x in range(255)]
             self.client.execute('INSERT INTO test (a) VALUES', data)
 
@@ -44,7 +45,7 @@ class LowCardinalityTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_nullable_int8(self):
-        with self.create_table('a LowCardinality(Nullable(Int8))'):
+        with self.create_stream('a low_cardinality(nullable(int8))'):
             data = [(None, ), (-1, ), (0, ), (1, ), (None, )]
             self.client.execute('INSERT INTO test (a) VALUES', data)
 
@@ -56,7 +57,7 @@ class LowCardinalityTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_date(self):
-        with self.create_table('a LowCardinality(Date)'):
+        with self.create_stream('a low_cardinality(Date)'):
             start = date(1970, 1, 1)
             data = [(start + timedelta(x), ) for x in range(300)]
             self.client.execute('INSERT INTO test (a) VALUES', data)
@@ -66,7 +67,7 @@ class LowCardinalityTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_float(self):
-        with self.create_table('a LowCardinality(Float)'):
+        with self.create_stream('a low_cardinality(float)'):
             data = [(float(x),) for x in range(300)]
             self.client.execute('INSERT INTO test (a) VALUES', data)
 
@@ -75,7 +76,7 @@ class LowCardinalityTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_decimal(self):
-        with self.create_table('a LowCardinality(Float)'):
+        with self.create_stream('a low_cardinality(float)'):
             data = [(Decimal(x),) for x in range(300)]
             self.client.execute('INSERT INTO test (a) VALUES', data)
 
@@ -84,7 +85,7 @@ class LowCardinalityTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_array(self):
-        with self.create_table('a Array(LowCardinality(Int16))'):
+        with self.create_stream('a array(low_cardinality(int16))'):
             data = [([100, 500], )]
             self.client.execute('INSERT INTO test (a) VALUES', data)
 
@@ -96,7 +97,7 @@ class LowCardinalityTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_empty_array(self):
-        with self.create_table('a Array(LowCardinality(Int16))'):
+        with self.create_stream('a array(low_cardinality(int16))'):
             data = [([], )]
             self.client.execute('INSERT INTO test (a) VALUES', data)
 
@@ -108,7 +109,7 @@ class LowCardinalityTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_string(self):
-        with self.create_table('a LowCardinality(String)'):
+        with self.create_stream('a low_cardinality(string)'):
             data = [
                 ('test', ), ('low', ), ('cardinality', ),
                 ('test', ), ('test', ), ('', )
@@ -126,7 +127,7 @@ class LowCardinalityTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_fixed_string(self):
-        with self.create_table('a LowCardinality(FixedString(12))'):
+        with self.create_stream('a low_cardinality(fixed_string(12))'):
             data = [
                 ('test', ), ('low', ), ('cardinality', ),
                 ('test', ), ('test', ), ('', )
@@ -149,7 +150,7 @@ class LowCardinalityTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_nullable_string(self):
-        with self.create_table('a LowCardinality(Nullable(String))'):
+        with self.create_stream('a low_cardinality(nullable(string))'):
             data = [
                 ('test', ), ('', ), (None, )
             ]

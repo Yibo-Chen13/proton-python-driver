@@ -7,10 +7,10 @@ from tests.testcase import BaseTestCase
 
 
 class IPv4TestCase(BaseTestCase):
-    required_server_version = (19, 3, 3)
+    # required_server_version = (19, 3, 3)
 
     def test_simple(self):
-        with self.create_table('a IPv4'):
+        with self.create_stream('a IPv4'):
             data = [
                 (IPv4Address("10.0.0.1"),),
                 (IPv4Address("192.168.253.42"),)
@@ -32,7 +32,7 @@ class IPv4TestCase(BaseTestCase):
             ])
 
     def test_from_int(self):
-        with self.create_table('a IPv4'):
+        with self.create_stream('a IPv4'):
             data = [
                 (167772161,),
             ]
@@ -51,7 +51,7 @@ class IPv4TestCase(BaseTestCase):
             ])
 
     def test_from_str(self):
-        with self.create_table('a IPv4'):
+        with self.create_stream('a IPv4'):
             data = [
                 ("10.0.0.1",),
             ]
@@ -71,7 +71,7 @@ class IPv4TestCase(BaseTestCase):
 
     def test_type_mismatch(self):
         data = [(1025.2147,)]
-        with self.create_table('a IPv4'):
+        with self.create_stream('a IPv4'):
             with self.assertRaises(errors.TypeMismatchError):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', data, types_check=True
@@ -79,7 +79,7 @@ class IPv4TestCase(BaseTestCase):
 
     def test_bad_ipv4(self):
         data = [('985.512.12.0',)]
-        with self.create_table('a IPv4'):
+        with self.create_stream('a IPv4'):
             with self.assertRaises(errors.CannotParseDomainError):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', data
@@ -87,14 +87,14 @@ class IPv4TestCase(BaseTestCase):
 
     def test_bad_ipv4_with_type_check(self):
         data = [('985.512.12.0',)]
-        with self.create_table('a IPv4'):
+        with self.create_stream('a IPv4'):
             with self.assertRaises(errors.TypeMismatchError):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', data, types_check=True
                 )
 
     def test_nullable(self):
-        with self.create_table('a Nullable(IPv4)'):
+        with self.create_stream('a nullable(IPv4)'):
             data = [(IPv4Address('10.10.10.10'),), (None,)]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
@@ -110,10 +110,10 @@ class IPv4TestCase(BaseTestCase):
 
 
 class IPv6TestCase(BaseTestCase):
-    required_server_version = (19, 3, 3)
+    # required_server_version = (19, 3, 3)
 
     def test_simple(self):
-        with self.create_table('a IPv6'):
+        with self.create_stream('a IPv6'):
             data = [
                 (IPv6Address('79f4:e698:45de:a59b:2765:28e3:8d3a:35ae'),),
                 (IPv6Address('a22:cc64:cf47:1653:4976:3c0c:ff8d:417c'),),
@@ -138,7 +138,7 @@ class IPv6TestCase(BaseTestCase):
             ])
 
     def test_from_str(self):
-        with self.create_table('a IPv6'):
+        with self.create_stream('a IPv6'):
             data = [
                 ('79f4:e698:45de:a59b:2765:28e3:8d3a:35ae',),
             ]
@@ -157,7 +157,7 @@ class IPv6TestCase(BaseTestCase):
             ])
 
     def test_from_bytes(self):
-        with self.create_table('a IPv6'):
+        with self.create_stream('a IPv6'):
             data = [
                 (b"y\xf4\xe6\x98E\xde\xa5\x9b'e(\xe3\x8d:5\xae",),
             ]
@@ -177,7 +177,7 @@ class IPv6TestCase(BaseTestCase):
 
     def test_type_mismatch(self):
         data = [(1025.2147,)]
-        with self.create_table('a IPv6'):
+        with self.create_stream('a IPv6'):
             with self.assertRaises(errors.TypeMismatchError):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', data, types_check=True
@@ -185,7 +185,7 @@ class IPv6TestCase(BaseTestCase):
 
     def test_bad_ipv6(self):
         data = [("ghjk:e698:45de:a59b:2765:28e3:8d3a:zzzz",)]
-        with self.create_table('a IPv6'):
+        with self.create_stream('a IPv6'):
             with self.assertRaises(errors.CannotParseDomainError):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', data
@@ -193,14 +193,14 @@ class IPv6TestCase(BaseTestCase):
 
     def test_bad_ipv6_with_type_check(self):
         data = [("ghjk:e698:45de:a59b:2765:28e3:8d3a:zzzz",)]
-        with self.create_table('a IPv6'):
+        with self.create_stream('a IPv6'):
             with self.assertRaises(errors.TypeMismatchError):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', data, types_check=True
                 )
 
     def test_nullable(self):
-        with self.create_table('a Nullable(IPv6)'):
+        with self.create_stream('a nullable(IPv6)'):
             data = [
                 (IPv6Address('79f4:e698:45de:a59b:2765:28e3:8d3a:35ae'),),
                 (None,)]

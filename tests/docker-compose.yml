@@ -2,17 +2,17 @@ version: '3'
 
 services:
   proton-server:
-    image: "ghcr.io/timeplus-io/proton:latest"
+    image: "timeplus/timeplusd:latest"
     container_name: test-proton-server
     environment:
-      - TZ=Europe/Moscow
+      - TZ=Asia/Shanghai
     ports:
       - "127.0.0.1:8463:8463" 
     command: >
       /bin/bash -c "echo sleeping; sleep 2; /entrypoint.sh"
 
   proton-client:
-    image: "ghcr.io/timeplus-io/proton:latest"
+    image: "timeplus/timeplusd:latest"
     container_name: test-proton-client
     entrypoint: /bin/sh
     command: [-c, 'while :; do sleep 1; done']

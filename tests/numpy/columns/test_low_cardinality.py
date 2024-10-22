@@ -15,19 +15,16 @@ from tests.numpy.testcase import NumpyBaseTestCase
 
 
 class LowCardinalityTestCase(NumpyBaseTestCase):
-    required_server_version = (19, 3, 3)
-    stable_support_version = (19, 9, 2)
 
     def cli_client_kwargs(self):
-        if self.server_version >= self.stable_support_version:
-            return {'allow_suspicious_low_cardinality_types': 1}
+        return {'allow_suspicious_low_cardinality_types': 1}
 
     def check_result(self, inserted, data):
-        self.assertArraysEqual(inserted[0], data[0])
+        self.assertarraysEqual(inserted[0], data[0])
         self.assertIsInstance(inserted[0], pd.Categorical)
 
     def test_uint8(self):
-        with self.create_table('a LowCardinality(UInt8)'):
+        with self.create_stream('a low_cardinality(uint8)'):
             data = [np.array(range(255))]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data, columnar=True
@@ -44,7 +41,7 @@ class LowCardinalityTestCase(NumpyBaseTestCase):
             self.check_result(inserted, data)
 
     def test_int8(self):
-        with self.create_table('a LowCardinality(Int8)'):
+        with self.create_stream('a low_cardinality(int8)'):
             data = [np.array([x - 127 for x in range(255)])]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data, columnar=True
@@ -62,7 +59,7 @@ class LowCardinalityTestCase(NumpyBaseTestCase):
             self.check_result(inserted, data)
 
     def test_nullable_int8(self):
-        with self.create_table('a LowCardinality(Nullable(Int8))'):
+        with self.create_stream('a low_cardinality(nullable(int8))'):
             data = [np.array([None, -1, 0, 1, None], dtype=object)]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data, columnar=True
@@ -73,14 +70,14 @@ class LowCardinalityTestCase(NumpyBaseTestCase):
             self.assertEqual(inserted, '\\N\n-1\n0\n1\n\\N\n')
 
             inserted = self.client.execute(query, columnar=True)
-            self.assertArraysEqual(
+            self.assertarraysEqual(
                 inserted[0].astype(str),
                 pd.Categorical(data[0]).astype(str)
             )
             self.assertIsInstance(inserted[0], pd.Categorical)
 
     def test_date(self):
-        with self.create_table('a LowCardinality(Date)'):
+        with self.create_stream('a low_cardinality(Date)'):
             data = [np.array(list(range(300)), dtype='datetime64[D]')]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data, columnar=True
@@ -91,7 +88,7 @@ class LowCardinalityTestCase(NumpyBaseTestCase):
             self.check_result(inserted, data)
 
     def test_float(self):
-        with self.create_table('a LowCardinality(Float)'):
+        with self.create_stream('a low_cardinality(float)'):
             data = [np.array([float(x) for x in range(300)])]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data, columnar=True
@@ -102,7 +99,7 @@ class LowCardinalityTestCase(NumpyBaseTestCase):
             self.check_result(inserted, data)
 
     # def test_decimal(self):
-    #     with self.create_table('a LowCardinality(Float)'):
+    #     with self.create_table('a low_cardinality(float)'):
     #         data = [(Decimal(x),) for x in range(300)]
     #         self.client.execute('INSERT INTO test (a) VALUES', data[0])
     #
@@ -111,7 +108,7 @@ class LowCardinalityTestCase(NumpyBaseTestCase):
     #         self.assertEqual(inserted, data[0])
     #
     # def test_array(self):
-    #     with self.create_table('a Array(LowCardinality(Int16))'):
+    #     with self.create_table('a array(low_cardinality(int16))'):
     #         data = [([100, 500], )]
     #         self.client.execute('INSERT INTO test (a) VALUES', data[0])
     #
@@ -123,7 +120,7 @@ class LowCardinalityTestCase(NumpyBaseTestCase):
     #         self.assertEqual(inserted, data[0])
     #
     # def test_empty_array(self):
-    #     with self.create_table('a Array(LowCardinality(Int16))'):
+    #     with self.create_table('a array(low_cardinality(int16))'):
     #         data = [([], )]
     #         self.client.execute('INSERT INTO test (a) VALUES', data[0])
     #
@@ -135,7 +132,7 @@ class LowCardinalityTestCase(NumpyBaseTestCase):
     #         self.assertEqual(inserted, data[0])
     #
     def test_string(self):
-        with self.create_table('a LowCardinality(String)'):
+        with self.create_stream('a low_cardinality(string)'):
             data = [
                 np.array(['test', 'low', 'cardinality', 'test', 'test', ''])
             ]
@@ -154,7 +151,7 @@ class LowCardinalityTestCase(NumpyBaseTestCase):
             self.check_result(inserted, data)
 
     def test_insert_nan_string_into_non_nullable(self):
-        with self.create_table('a LowCardinality(String)'):
+        with self.create_stream('a low_cardinality(string)'):
             data = [
                 np.array(['test', None], dtype=object)
             ]
@@ -173,7 +170,7 @@ class LowCardinalityTestCase(NumpyBaseTestCase):
             self.check_result(inserted, [np.array(['test', ''])])
 
     def test_fixed_string(self):
-        with self.create_table('a LowCardinality(FixedString(12))'):
+        with self.create_stream('a low_cardinality(fixed_string(12))'):
             data = [
                 np.array(['test', 'low', 'cardinality', 'test', 'test', ''])
             ]
@@ -197,7 +194,7 @@ class LowCardinalityTestCase(NumpyBaseTestCase):
             self.check_result(inserted, data)
 
     def test_nullable_string(self):
-        with self.create_table('a LowCardinality(Nullable(String))'):
+        with self.create_stream('a low_cardinality(nullable(string))'):
             data = [
                 np.array(['test', '', None], dtype=object)
             ]
@@ -213,7 +210,7 @@ class LowCardinalityTestCase(NumpyBaseTestCase):
             )
 
             inserted = self.client.execute(query, columnar=True)
-            self.assertArraysEqual(
+            self.assertarraysEqual(
                 inserted[0].astype(str), pd.Categorical(data[0]).astype(str)
             )
             self.assertIsInstance(inserted[0], pd.Categorical)

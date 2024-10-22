@@ -5,10 +5,10 @@ from tests.testcase import BaseTestCase
 from proton_driver import errors
 
 
-class StringTestCase(BaseTestCase):
+class stringTestCase(BaseTestCase):
     def test_unicode(self):
         data = [('яндекс', )]
-        with self.create_table('a String'):
+        with self.create_stream('a string'):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )
@@ -22,7 +22,7 @@ class StringTestCase(BaseTestCase):
 
     def test_non_utf(self):
         data = [('яндекс'.encode('koi8-r'), )]
-        with self.create_table('a String'):
+        with self.create_stream('a string'):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )
@@ -36,7 +36,7 @@ class StringTestCase(BaseTestCase):
 
     def test_null_byte_in_the_middle(self):
         data = [('a\x00b', )]
-        with self.create_table('a String'):
+        with self.create_stream('a string'):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )
@@ -49,7 +49,7 @@ class StringTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_nullable(self):
-        with self.create_table('a Nullable(String)'):
+        with self.create_stream('a nullable(string)'):
             data = [(None, ), ('test', ), (None, ), ('nullable', )]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
@@ -64,7 +64,7 @@ class StringTestCase(BaseTestCase):
 
     def test_buffer_reader(self):
         data = [('a' * 300, )] * 300
-        with self.create_table('a String'):
+        with self.create_stream('a string'):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )
@@ -77,7 +77,7 @@ class StringTestCase(BaseTestCase):
     def test_compressed_client(self):
         with self.created_client(compression=True) as client:
             data = [('a' * 300, )]
-            with self.create_table('a String'):
+            with self.create_stream('a string'):
                 client.execute(
                     'INSERT INTO test (a) VALUES', data
                 )
@@ -91,7 +91,7 @@ class StringTestCase(BaseTestCase):
         settings = {'strings_encoding': 'cp1251'}
 
         data = [(('яндекс'), ), (('test'), )]
-        with self.create_table('a String'):
+        with self.create_stream('a string'):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data, settings=settings
             )
@@ -110,7 +110,7 @@ class StringTestCase(BaseTestCase):
             [(bytearray(b'asd'), )],
             [(123, )]
         ]
-        with self.create_table('a String'):
+        with self.create_stream('a string'):
             for data in datas:
                 with self.assertRaises(errors.TypeMismatchError) as e:
                     self.client.execute(
@@ -126,7 +126,7 @@ class StringTestCase(BaseTestCase):
                     )
 
 
-class ByteStringTestCase(BaseTestCase):
+class BytestringTestCase(BaseTestCase):
     client_kwargs = {'settings': {'strings_as_bytes': True}}
 
     def test_not_decoded(self):
@@ -134,7 +134,7 @@ class ByteStringTestCase(BaseTestCase):
             (bytes('яндекс'.encode('cp1251')), ),
             (bytes('test'.encode('cp1251')), ),
         ]
-        with self.create_table('a String'):
+        with self.create_stream('a string'):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )
@@ -149,7 +149,7 @@ class ByteStringTestCase(BaseTestCase):
             self.assertIsInstance(inserted[1][0], bytes)
 
     def test_nullable(self):
-        with self.create_table('a Nullable(String)'):
+        with self.create_stream('a nullable(string)'):
             data = [(None, ), (b'test', ), (None, ), (b'nullable', )]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
@@ -168,7 +168,7 @@ class ByteStringTestCase(BaseTestCase):
             [(bytearray(b'asd'), )],
             [(123, )]
         ]
-        with self.create_table('a String'):
+        with self.create_stream('a string'):
             for data in datas:
                 with self.assertRaises(errors.TypeMismatchError) as e:
                     self.client.execute(

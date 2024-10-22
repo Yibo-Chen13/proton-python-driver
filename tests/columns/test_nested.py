@@ -1,5 +1,4 @@
 from tests.testcase import BaseTestCase
-from tests.util import require_server_version
 from proton_driver.columns import nestedcolumn
 
 
@@ -9,14 +8,13 @@ class NestedTestCase(BaseTestCase):
             self.entuple(x) if isinstance(x, list) else x for x in lst
         )
 
-    @require_server_version(21, 3, 13)
     def test_simple(self):
-        columns = 'n Nested(i Int32, s String)'
+        columns = 'n nested(i int32, s string)'
 
         # INSERT INTO test_nested VALUES ([(0, 'a'), (1, 'b')]);
         data = [([(0, 'a'), (1, 'b')],)]
 
-        with self.create_table(columns, flatten_nested=0):
+        with self.create_stream(columns, flatten_nested=0):
             self.client.execute(
                 'INSERT INTO test (n) VALUES', data
             )
@@ -40,13 +38,12 @@ class NestedTestCase(BaseTestCase):
                 [(['a', 'b'],)]
             )
 
-    @require_server_version(21, 3, 13)
     def test_multiple_rows(self):
-        columns = 'n Nested(i Int32, s String)'
+        columns = 'n nested(i int32, s string)'
 
         data = [([(0, 'a'), (1, 'b')],), ([(3, 'd'), (4, 'e')],)]
 
-        with self.create_table(columns, flatten_nested=0):
+        with self.create_stream(columns, flatten_nested=0):
             self.client.execute(
                 'INSERT INTO test (n) VALUES', data
             )
@@ -61,16 +58,15 @@ class NestedTestCase(BaseTestCase):
             inserted = self.client.execute(query)
             self.assertEqual(inserted, data)
 
-    @require_server_version(21, 3, 13)
     def test_dict(self):
-        columns = 'n Nested(i Int32, s String)'
+        columns = 'n nested(i int32, s string)'
 
         data = [
             {'n': [{'i': 0, 's': 'a'}, {'i': 1, 's': 'b'}]},
             {'n': [{'i': 3, 's': 'd'}, {'i': 4, 's': 'e'}]},
         ]
 
-        with self.create_table(columns, flatten_nested=0):
+        with self.create_stream(columns, flatten_nested=0):
             self.client.execute(
                 'INSERT INTO test (n) VALUES', data
             )
@@ -91,22 +87,22 @@ class NestedTestCase(BaseTestCase):
     def test_get_nested_columns(self):
         self.assertEqual(
             nestedcolumn.get_nested_columns(
-                'Nested(a Tuple(Array(Int8)),\n b Nullable(String))',
+                'nested(a tuple(array(int8)),\n b nullable(string))',
             ),
-            ['Tuple(Array(Int8))', 'Nullable(String)']
+            ['tuple(array(int8))', 'nullable(string)']
         )
 
     def test_get_columns_with_types(self):
         self.assertEqual(
             nestedcolumn.get_columns_with_types(
-                'Nested(a Tuple(Array(Int8)),\n b Nullable(String))',
+                'nested(a tuple(array(int8)),\n b nullable(string))',
             ),
-            [('a', 'Tuple(Array(Int8))'), ('b', 'Nullable(String)')]
+            [('a', 'tuple(array(int8))'), ('b', 'nullable(string)')]
         )
 
     def test_get_inner_spec(self):
-        inner = 'a Tuple(Array(Int8), Array(Int64)), b Nullable(String)'
+        inner = 'a tuple(array(int8), array(int64)), b nullable(string)'
         self.assertEqual(
-            nestedcolumn.get_inner_spec('Nested({}) dummy '.format(inner)),
+            nestedcolumn.get_inner_spec('nested({}) dummy '.format(inner)),
             inner
         )

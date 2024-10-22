@@ -4,12 +4,12 @@ from proton_driver import errors
 ErrorCodes = errors.ErrorCodes
 
 
-class NullableTestCase(BaseTestCase):
+class nullableTestCase(BaseTestCase):
     def test_simple(self):
-        columns = 'a Nullable(Int32)'
+        columns = 'a nullable(int32)'
 
         data = [(3, ), (None, ), (2, )]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )
@@ -24,21 +24,21 @@ class NullableTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_nullable_inside_nullable(self):
-        columns = 'a Nullable(Nullable(Int32))'
+        columns = 'a nullable(nullable(int32))'
 
         with self.assertRaises(errors.ServerException) as e:
             self.client.execute(
-                'CREATE TABLE test ({}) ''ENGINE = Memory'.format(columns)
+                'CREATE STREAM test ({}) ''ENGINE = Memory'.format(columns)
             )
 
         self.assertEqual(e.exception.code, ErrorCodes.ILLEGAL_TYPE_OF_ARGUMENT)
 
     def test_nullable_array(self):
-        columns = 'a Nullable(Array(Nullable(Array(Nullable(Int32)))))'
+        columns = 'a nullable(array(nullable(array(nullable(int32)))))'
 
         with self.assertRaises(errors.ServerException) as e:
             self.client.execute(
-                'CREATE TABLE test ({}) ''ENGINE = Memory'.format(columns)
+                'CREATE STREAM test ({}) ''ENGINE = Memory'.format(columns)
             )
 
         self.assertEqual(e.exception.code, ErrorCodes.ILLEGAL_TYPE_OF_ARGUMENT)

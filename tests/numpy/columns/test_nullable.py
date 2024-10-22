@@ -14,12 +14,12 @@ from proton_driver import errors
 ErrorCodes = errors.ErrorCodes
 
 
-class NullableTestCase(NumpyBaseTestCase):
+class nullableTestCase(NumpyBaseTestCase):
     def test_simple(self):
-        columns = 'a Nullable(Int32)'
+        columns = 'a nullable(int32)'
 
         data = [np.array([3, None, 2], dtype=object)]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data, columnar=True
             )
@@ -31,15 +31,15 @@ class NullableTestCase(NumpyBaseTestCase):
             )
 
             inserted = self.client.execute(query, columnar=True)
-            self.assertArraysEqual(inserted[0], data[0])
+            self.assertarraysEqual(inserted[0], data[0])
             self.assertEqual(inserted[0].dtype, object)
 
     def test_simple_dataframe(self):
         columns = (
-            'a Int64, '
-            'b Nullable(Float64), '
-            'c Nullable(String), '
-            'd Nullable(Int64)'
+            'a int64, '
+            'b nullable(float64), '
+            'c nullable(string), '
+            'd nullable(int64)'
         )
 
         df = pd.DataFrame({
@@ -55,7 +55,7 @@ class NullableTestCase(NumpyBaseTestCase):
             'd': np.array([1, None, None], dtype=object),
         })
 
-        with self.create_table(columns):
+        with self.create_stream(columns):
             rv = self.client.insert_dataframe('INSERT INTO test VALUES', df)
             self.assertEqual(rv, 3)
             df2 = self.client.query_dataframe('SELECT * FROM test ORDER BY a')

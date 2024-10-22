@@ -6,7 +6,7 @@ from proton_driver import errors
 
 class FloatTestCase(BaseTestCase):
     def test_chop_to_type(self):
-        with self.create_table('a Float32, b Float64'):
+        with self.create_stream('a float32, b float64'):
             data = [
                 (3.4028235e38, 3.4028235e38),
                 (3.4028235e39, 3.4028235e39),
@@ -22,7 +22,7 @@ class FloatTestCase(BaseTestCase):
             self.assertIn('Column a', str(e.exception))
 
     def test_simple(self):
-        with self.create_table('a Float32, b Float64'):
+        with self.create_stream('a float32, b float64'):
             data = [
                 (3.4028235e38, 3.4028235e38),
                 (3.4028235e39, 3.4028235e39),
@@ -53,7 +53,7 @@ class FloatTestCase(BaseTestCase):
             ])
 
     def test_nullable(self):
-        with self.create_table('a Nullable(Float32)'):
+        with self.create_stream('a nullable(float32)'):
             data = [(None, ), (0.5, ), (None, ), (1.5, )]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
@@ -67,7 +67,7 @@ class FloatTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_nan(self):
-        with self.create_table('a Float32'):
+        with self.create_stream('a float32'):
             data = [(float('nan'), ), (0.5, )]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data

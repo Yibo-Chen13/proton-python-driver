@@ -78,8 +78,8 @@ class ParametersSubstitutionTestCase(BaseTestCase):
                           "SELECT '2017-07-13 20:40:00'")
 
         tpl = (
-            'SELECT toDateTime(toInt32(toDateTime(%(x)s))), '
-            'toInt32(toDateTime(%(x)s))'
+            'SELECT to_datetime(to_int32(to_datetime(%(x)s))), '
+            'to_int32(to_datetime(%(x)s))'
         )
 
         with patch_env_tz('Asia/Novosibirsk'):
@@ -89,18 +89,18 @@ class ParametersSubstitutionTestCase(BaseTestCase):
             )
 
             self.assertEqual(
-                rv, [(datetime(2017, 7, 13, 20, 40, 0), 1499967600)]
+                rv, [(datetime(2017, 7, 14, 1, 40, 0), 1499967600)]
             )
 
             query = (
                 "SELECT "
-                "toDateTime(toInt32(toDateTime('{0}', 'Asia/Kamchatka'))), "
-                "toInt32(toDateTime('{0}', 'Asia/Kamchatka'))"
+                "to_datetime(to_int32(to_datetime('{0}', 'Asia/Kamchatka'))), "
+                "to_int32(to_datetime('{0}', 'Asia/Kamchatka'))"
             ).format('2017-07-14 05:40:00')
 
             rv = self.emit_cli(query, use_client_time_zone=0)
 
-            self.assertEqual(rv, '2017-07-13 20:40:00\t1499967600\n')
+            self.assertEqual(rv, '2017-07-14 01:40:00\t1499967600\n')
 
             # use client timezone
             rv = self.client.execute(
@@ -113,8 +113,8 @@ class ParametersSubstitutionTestCase(BaseTestCase):
 
             query = (
                 "SELECT "
-                "toDateTime(toInt32(toDateTime('{0}', 'Asia/Kamchatka'))), "
-                "toInt32(toDateTime('{0}', 'Asia/Kamchatka'))"
+                "to_datetime(to_int32(to_datetime('{0}', 'Asia/Kamchatka'))), "
+                "to_int32(to_datetime('{0}', 'Asia/Kamchatka'))"
             ).format('2017-07-14 05:40:00')
 
             rv = self.emit_cli(query, use_client_time_zone=1)
@@ -165,7 +165,7 @@ class ParametersSubstitutionTestCase(BaseTestCase):
         self.assert_subst('SELECT * FROM test WHERE a IN %(x)s', params,
                           'SELECT * FROM test WHERE a IN (1, NULL, 2)')
 
-        with self.create_table('a Int32'):
+        with self.create_stream('a int32'):
             self.client.execute('INSERT INTO test (a) VALUES', [(1, )])
             self.client.execute('INSERT INTO test (a) VALUES', [(2, )])
 

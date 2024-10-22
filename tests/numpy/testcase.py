@@ -14,10 +14,10 @@ class NumpyBaseTestCase(BaseTestCase):
     def setUp(self):
         super(NumpyBaseTestCase, self).setUp()
 
-    def assertArraysEqual(self, first, second):
+    def assertarraysEqual(self, first, second):
         return self.assertTrue((first == second).all())
 
-    def assertArraysListEqual(self, first, second):
+    def assertarraysListEqual(self, first, second):
         self.assertEqual(len(first), len(second))
         for x, y in zip(first, second):
             self.assertTrue((x == y).all())
