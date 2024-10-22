@@ -11,8 +11,8 @@ class BlocksTestCase(BaseTestCase):
     def test_return_totals_extremes(self):
         rv = self.client.execute(
             'SELECT a, sum(b + a) FROM ('
-            'SELECT arrayJoin(range(3)) - 1 AS a,'
-            'arrayJoin(range(4)) AS b'
+            'SELECT array_join(range(3)) - 1 AS a,'
+            'array_join(range(4)) AS b'
             ') AS t '
             'GROUP BY a WITH TOTALS '
             'ORDER BY a',
@@ -34,8 +34,8 @@ class BlocksTestCase(BaseTestCase):
     def test_columnar_result(self):
         rv = self.client.execute(
             'SELECT a, sum(b + a) FROM ('
-            'SELECT arrayJoin(range(3)) - 1 AS a,'
-            'arrayJoin(range(4)) AS b'
+            'SELECT array_join(range(3)) - 1 AS a,'
+            'array_join(range(4)) AS b'
             ') AS t '
             'GROUP BY a '
             'ORDER BY a',
@@ -47,7 +47,7 @@ class BlocksTestCase(BaseTestCase):
         ])
 
     def test_columnar_block_extend(self):
-        with self.create_table('a Int32'):
+        with self.create_stream('a int32'):
             self.client.execute('INSERT INTO test (a) VALUES', [(1, )])
             self.client.execute('INSERT INTO test (a) VALUES', [(2, )])
 
@@ -58,17 +58,17 @@ class BlocksTestCase(BaseTestCase):
 
     def test_select_with_column_types(self):
         rv = self.client.execute(
-            'SELECT CAST(1 AS Int32) AS x', with_column_types=True
+            'SELECT CAST(1 AS int32) AS x', with_column_types=True
         )
-        self.assertEqual(rv, ([(1,)], [('x', 'Int32')]))
+        self.assertEqual(rv, ([(1,)], [('x', 'int32')]))
 
     def test_select_with_columnar_with_column_types(self):
         progress = self.client.execute_with_progress(
-            'SELECT arrayJoin(A) -1 as j,'
-            'arrayJoin(A)+1 as k FROM('
+            'SELECT array_join(A) -1 as j,'
+            'array_join(A)+1 as k FROM('
             'SELECT range(3) as A)',
             columnar=True, with_column_types=True)
-        rv = ([(-1, 0, 1), (1, 2, 3)], [('j', 'Int16'), ('k', 'UInt16')])
+        rv = ([(-1, 0, 1), (1, 2, 3)], [('j', 'int16'), ('k', 'uint16')])
         self.assertEqual(progress.get_result(), rv)
 
     def test_close_connection_on_keyboard_interrupt(self):
@@ -86,7 +86,7 @@ class ProgressTestCase(BaseTestCase):
         progress = self.client.execute_with_progress('SELECT 2')
         self.assertEqual(
             list(progress),
-            [(1, 0), (1, 0)] if self.server_version > (20,) else [(1, 0)]
+            [(1, 0), (1, 0)]
         )
         self.assertEqual(progress.get_result(), [(2,)])
         self.assertTrue(self.client.connection.connected)
@@ -121,9 +121,9 @@ class ProgressTestCase(BaseTestCase):
         self.assertTrue(self.client.connection.connected)
 
     def test_select_with_progress_cancel_with_column_types(self):
-        self.client.execute_with_progress('SELECT CAST(2 AS Int32) as x')
+        self.client.execute_with_progress('SELECT CAST(2 AS int32) as x')
         rv = self.client.cancel(with_column_types=True)
-        self.assertEqual(rv, ([(2,)], [('x', 'Int32')]))
+        self.assertEqual(rv, ([(2,)], [('x', 'int32')]))
         self.assertTrue(self.client.connection.connected)
 
     def test_select_with_progress_with_params(self):
@@ -155,7 +155,7 @@ class IteratorTestCase(BaseTestCase):
 
     def test_select_with_iter_with_column_types(self):
         result = self.client.execute_iter(
-            'SELECT CAST(number AS UInt32) as number '
+            'SELECT CAST(number AS uint32) as number '
             'FROM system.numbers LIMIT 10',
             with_column_types=True
         )
@@ -163,7 +163,7 @@ class IteratorTestCase(BaseTestCase):
 
         self.assertEqual(
             list(result),
-            [[('number', 'UInt32')]] + list(zip(range(10)))
+            [[('number', 'uint32')]] + list(zip(range(10)))
         )
         self.assertEqual(list(result), [])
 
@@ -198,7 +198,7 @@ class LogTestCase(BaseTestCase):
 
     def test_logs_insert(self):
         with capture_logging('proton_driver.log', 'INFO') as buffer:
-            with self.create_table('a Int32'):
+            with self.create_stream('a int32'):
                 settings = {'send_logs_level': 'debug'}
 
                 query = 'INSERT INTO test (a) VALUES'

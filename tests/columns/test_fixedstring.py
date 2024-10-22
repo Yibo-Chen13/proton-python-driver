@@ -5,10 +5,10 @@ from tests.testcase import BaseTestCase
 from proton_driver import errors
 
 
-class FixedStringTestCase(BaseTestCase):
+class FixedstringTestCase(BaseTestCase):
     def test_simple(self):
         data = [('a', ), ('bb', ), ('ccc', ), ('dddd', ), ('я', )]
-        with self.create_table('a FixedString(4)'):
+        with self.create_stream('a fixed_string(4)'):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )
@@ -30,7 +30,7 @@ class FixedStringTestCase(BaseTestCase):
 
     def test_non_utf(self):
         data = [('яндекс'.encode('koi8-r'), )]
-        with self.create_table('a FixedString(6)'):
+        with self.create_stream('a fixed_string(6)'):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )
@@ -43,24 +43,24 @@ class FixedStringTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_oversized(self):
-        columns = 'a FixedString(4)'
+        columns = 'a fixed_string(4)'
 
         data = [('aaaaa', )]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             with self.assertRaises(errors.TooLargeStringSize):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', data
                 )
 
         data = [('тест', )]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             with self.assertRaises(errors.TooLargeStringSize):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', data
                 )
 
     def test_nullable(self):
-        with self.create_table('a Nullable(FixedString(10))'):
+        with self.create_stream('a nullable(fixed_string(10))'):
             data = [(None, ), ('test', ), (None, ), ('nullable', )]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
@@ -78,7 +78,7 @@ class FixedStringTestCase(BaseTestCase):
 
     def test_null_byte_in_the_middle(self):
         data = [('test\0test', )]
-        with self.create_table('a FixedString(9)'):
+        with self.create_stream('a fixed_string(9)'):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )
@@ -89,7 +89,7 @@ class FixedStringTestCase(BaseTestCase):
 
     def test_empty(self):
         data = [('',)]
-        with self.create_table('a FixedString(5)'):
+        with self.create_stream('a fixed_string(5)'):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )
@@ -102,7 +102,7 @@ class FixedStringTestCase(BaseTestCase):
         settings = {'strings_encoding': 'cp1251'}
 
         data = [(('яндекс'), ), (('test'), )]
-        with self.create_table('a FixedString(10)'):
+        with self.create_stream('a fixed_string(10)'):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data, settings=settings
             )
@@ -125,7 +125,7 @@ class FixedStringTestCase(BaseTestCase):
             [(bytearray(b'asd'), )],
             [(123, )]
         ]
-        with self.create_table('a String'):
+        with self.create_stream('a string'):
             for data in datas:
                 with self.assertRaises(errors.TypeMismatchError) as e:
                     self.client.execute(
@@ -141,21 +141,21 @@ class FixedStringTestCase(BaseTestCase):
                     )
 
 
-class ByteFixedStringTestCase(BaseTestCase):
+class ByteFixedstringTestCase(BaseTestCase):
     client_kwargs = {'settings': {'strings_as_bytes': True}}
 
     def test_oversized(self):
-        columns = 'a FixedString(4)'
+        columns = 'a fixed_string(4)'
 
         data = [(bytes('aaaaa'.encode('utf-8')), )]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             with self.assertRaises(errors.TooLargeStringSize):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', data
                 )
 
         data = [(bytes('тест'.encode('utf-8')), )]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             with self.assertRaises(errors.TooLargeStringSize):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', data
@@ -166,7 +166,7 @@ class ByteFixedStringTestCase(BaseTestCase):
             (bytes('яндекс'.encode('cp1251')), ),
             (bytes('test'.encode('cp1251')), ),
         ]
-        with self.create_table('a FixedString(8)'):
+        with self.create_stream('a fixed_string(8)'):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )
@@ -189,7 +189,7 @@ class ByteFixedStringTestCase(BaseTestCase):
             self.assertIsInstance(inserted[1][0], bytes)
 
     def test_nullable(self):
-        with self.create_table('a Nullable(FixedString(10))'):
+        with self.create_stream('a nullable(fixed_string(10))'):
             data = [
                 (None, ),
                 (b'test\x00\x00\x00\x00\x00\x00', ),
@@ -216,7 +216,7 @@ class ByteFixedStringTestCase(BaseTestCase):
             [(bytearray(b'asd'), )],
             [(123, )]
         ]
-        with self.create_table('a String'):
+        with self.create_stream('a string'):
             for data in datas:
                 with self.assertRaises(errors.TypeMismatchError) as e:
                     self.client.execute(

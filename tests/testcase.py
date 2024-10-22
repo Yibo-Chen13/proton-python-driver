@@ -74,11 +74,6 @@ class BaseTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.emit_cli(
-            'DROP DATABASE IF EXISTS {}'.format(cls.database), 'default'
-        )
-        cls.emit_cli('CREATE DATABASE {}'.format(cls.database), 'default')
-
         version_str = cls.emit_cli('SELECT version()').strip()
         cls.server_version = tuple(int(x) for x in version_str.split('.'))
 
@@ -103,13 +98,8 @@ class BaseTestCase(TestCase):
         self.client.disconnect()
         super(BaseTestCase, self).tearDown()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.emit_cli('DROP DATABASE {}'.format(cls.database))
-        super(BaseTestCase, cls).tearDownClass()
-
     @contextmanager
-    def create_table(self, columns, **kwargs):
+    def create_stream(self, columns, **kwargs):
         if self.cli_client_kwargs:
             if callable(self.cli_client_kwargs):
                 cli_client_kwargs = self.cli_client_kwargs()
@@ -119,7 +109,7 @@ class BaseTestCase(TestCase):
                 kwargs.update(self.cli_client_kwargs)
 
         self.emit_cli(
-            'CREATE TABLE test ({}) ''ENGINE = Memory'.format(columns),
+            'CREATE STREAM test ({}) ''ENGINE = Memory'.format(columns),
             **kwargs
         )
         try:
@@ -127,4 +117,4 @@ class BaseTestCase(TestCase):
         except Exception:
             raise
         finally:
-            self.emit_cli('DROP TABLE test')
+            self.emit_cli('DROP STREAM test')

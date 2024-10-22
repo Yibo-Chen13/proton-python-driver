@@ -4,13 +4,13 @@ from tests.testcase import BaseTestCase
 
 
 class SimpleAggregateFunctionTestCase(BaseTestCase):
-    required_server_version = (19, 8, 3)
+    # required_server_version = (19, 8, 3)
 
     def test_simple(self):
-        columns = 'a SimpleAggregateFunction(any, Int32)'
+        columns = 'a simple_aggregate_function(any, int32)'
 
         data = [(3, ), (2, )]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )
@@ -25,10 +25,10 @@ class SimpleAggregateFunctionTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_nullable(self):
-        columns = 'a SimpleAggregateFunction(any, Nullable(Int32))'
+        columns = 'a simple_aggregate_function(any, nullable(int32))'
 
         data = [(3, ), (None, ), (2, )]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )
@@ -47,11 +47,11 @@ class SimpleAggregateFunctionTestCase(BaseTestCase):
             hello = -1
             world = 2
 
-        columns = "a SimpleAggregateFunction(anyLast, " \
-                  "Enum8('hello' = -1, 'world' = 2))"
+        columns = "a simple_aggregate_function(any_last, " \
+                  "enum8('hello' = -1, 'world' = 2))"
 
         data = [(A.hello,), (A.world,), (-1,), (2,)]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )
@@ -80,11 +80,11 @@ class SimpleAggregateFunctionTestCase(BaseTestCase):
             hello = -1
             world = 2
 
-        columns = "a SimpleAggregateFunction(anyLast, " \
-                  "Nullable(Enum8('hello' = -1, 'world' = 2)))"
+        columns = "a simple_aggregate_function(any_last, " \
+                  "nullable(enum8('hello' = -1, 'world' = 2)))"
 
         data = [(A.hello,), (A.world,), (None,), (-1,), (2,)]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
             )

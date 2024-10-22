@@ -3,13 +3,13 @@ from proton_driver import errors
 
 
 class BoolTestCase(BaseTestCase):
-    required_server_version = (21, 12)
+    # required_server_version = (21, 12)
 
     def test_simple(self):
-        columns = ("a Bool")
+        columns = ("a bool")
 
         data = [(1,), (0,), (True,), (False,), (None,), ("False",), ("",)]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             self.client.execute('INSERT INTO test (a) VALUES', data)
 
             query = 'SELECT * FROM test'
@@ -40,8 +40,8 @@ class BoolTestCase(BaseTestCase):
             )
 
     def test_errors(self):
-        columns = "a Bool"
-        with self.create_table(columns):
+        columns = "a bool"
+        with self.create_stream(columns):
             with self.assertRaises(errors.TypeMismatchError):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', [(1, )],
@@ -49,10 +49,10 @@ class BoolTestCase(BaseTestCase):
                 )
 
     def test_nullable(self):
-        columns = "a Nullable(Bool)"
+        columns = "a nullable(bool)"
 
         data = [(None, ), (True, ), (False, )]
-        with self.create_table(columns):
+        with self.create_stream(columns):
             self.client.execute('INSERT INTO test (a) VALUES', data)
 
             query = 'SELECT * FROM test'

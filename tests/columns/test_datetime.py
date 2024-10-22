@@ -5,12 +5,12 @@ from pytz import timezone, utc, UnknownTimeZoneError
 import tzlocal
 
 from tests.testcase import BaseTestCase
-from tests.util import require_server_version, patch_env_tz
+from tests.util import patch_env_tz
 
 
 class DateTimeTestCase(BaseTestCase):
     def test_simple(self):
-        with self.create_table('a Date, b DateTime'):
+        with self.create_stream('a Date, b DateTime'):
             data = [(date(2012, 10, 25), datetime(2012, 10, 25, 14, 7, 19))]
             self.client.execute(
                 'INSERT INTO test (a, b) VALUES', data
@@ -24,7 +24,7 @@ class DateTimeTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_nullable_date(self):
-        with self.create_table('a Nullable(Date)'):
+        with self.create_stream('a nullable(Date)'):
             data = [
                 (None, ), (date(2012, 10, 25), ),
                 (None, ), (date(2017, 6, 23), )
@@ -43,7 +43,7 @@ class DateTimeTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_nullable_datetime(self):
-        with self.create_table('a Nullable(DateTime)'):
+        with self.create_stream('a nullable(DateTime)'):
             data = [
                 (None, ), (datetime(2012, 10, 25, 14, 7, 19), ),
                 (None, ), (datetime(2017, 6, 23, 19, 10, 15), )
@@ -72,9 +72,9 @@ class DateTimeTestCase(BaseTestCase):
                 mocked.side_effect = None
                 self.client.execute('SELECT now()')
 
-    @require_server_version(20, 1, 2)
+    # @require_server_version(20, 1, 2)
     def test_datetime64_frac_trunc(self):
-        with self.create_table('a DateTime64'):
+        with self.create_stream('a DateTime64'):
             data = [(datetime(2012, 10, 25, 14, 7, 19, 125600), )]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
@@ -90,40 +90,40 @@ class DateTimeTestCase(BaseTestCase):
             )
 
     def test_insert_integers(self):
-        with self.create_table('a DateTime'):
+        with self.create_stream('a DateTime'):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', [(1530211034, )]
             )
 
-            query = 'SELECT toUInt32(a), a FROM test'
+            query = 'SELECT to_uint32(a), a FROM test'
             inserted = self.emit_cli(query)
-            self.assertEqual(inserted, '1530211034\t2018-06-28 21:37:14\n')
+            self.assertEqual(inserted, '1530211034\t2018-06-29 02:37:14\n')
 
-    @require_server_version(20, 1, 2)
+    # @require_server_version(20, 1, 2)
     def test_insert_integers_datetime64(self):
-        with self.create_table('a DateTime64'):
+        with self.create_stream('a DateTime64'):
             self.client.execute(
                 'INSERT INTO test (a) VALUES', [(1530211034123, )]
             )
 
-            query = 'SELECT toUInt32(a), a FROM test'
+            query = 'SELECT to_uint32(a), a FROM test'
             inserted = self.emit_cli(query)
-            self.assertEqual(inserted, '1530211034\t2018-06-28 21:37:14.123\n')
+            self.assertEqual(inserted, '1530211034\t2018-06-29 02:37:14.123\n')
 
     def test_insert_integer_bounds(self):
-        with self.create_table('a DateTime'):
+        with self.create_stream('a DateTime'):
             self.client.execute(
                 'INSERT INTO test (a) VALUES',
                 [(0, ), (1, ), (1500000000, ), (2**32-1, )]
             )
 
-            query = 'SELECT toUInt32(a) FROM test ORDER BY a'
+            query = 'SELECT to_uint32(a) FROM test ORDER BY a'
             inserted = self.emit_cli(query)
             self.assertEqual(inserted, '0\n1\n1500000000\n4294967295\n')
 
-    @require_server_version(21, 4)
+    # @require_server_version(21, 4)
     def test_insert_datetime64_extended_range(self):
-        with self.create_table('a DateTime64(0)'):
+        with self.create_stream('a DateTime64(0)'):
             self.client.execute(
                 'INSERT INTO test (a) VALUES',
                 [(-1420077600, ), (-1420077599, ),
@@ -131,37 +131,36 @@ class DateTimeTestCase(BaseTestCase):
                  (9877248000, )]
             )
 
-            query = 'SELECT toInt64(a), a FROM test'
+            query = 'SELECT to_int64(a), a FROM test'
             inserted = self.emit_cli(query)
             self.assertEqual(
                 inserted,
-                '-1420077600\t1925-01-01 00:00:00\n'
-                '-1420077599\t1925-01-01 00:00:01\n'
-                '0\t1970-01-01 03:00:00\n'
-                '1\t1970-01-01 03:00:01\n'
-                '9877248000\t2282-12-31 03:00:00\n'
+                '-1420077600\t1925-01-01 06:00:00\n'
+                '-1420077599\t1925-01-01 06:00:01\n'
+                '0\t1970-01-01 08:00:00\n'
+                '1\t1970-01-01 08:00:01\n'
+                '9877248000\t2282-12-31 08:00:00\n'
             )
             query = 'SELECT a FROM test ORDER BY a'
             inserted = self.client.execute(query)
             self.assertEqual(
                 inserted, [
-                    (datetime(1925, 1, 1, 0, 0, 0), ),
-                    (datetime(1925, 1, 1, 0, 0, 1), ),
-                    (datetime(1970, 1, 1, 3, 0, 0), ),
-                    (datetime(1970, 1, 1, 3, 0, 1), ),
-                    (datetime(2282, 12, 31, 3, 0, 0), )
+                    (datetime(1925, 1, 1, 6, 0, 0), ),
+                    (datetime(1925, 1, 1, 6, 0, 1), ),
+                    (datetime(1970, 1, 1, 8, 0, 0), ),
+                    (datetime(1970, 1, 1, 8, 0, 1), ),
+                    (datetime(2282, 12, 31, 8, 0, 0), )
                 ]
             )
 
-    @require_server_version(21, 4)
     def test_insert_datetime64_extended_range_pure_ints_out_of_range(self):
-        with self.create_table('a DateTime64(0)'):
+        with self.create_stream('a DateTime64(0)'):
             self.client.execute(
                 'INSERT INTO test (a) VALUES',
                 [(0, ), (1, ), (-2**63, ), (2**63-1, )]
             )
 
-            query = 'SELECT toInt64(a) FROM test ORDER BY a'
+            query = 'SELECT to_int64(a) FROM test ORDER BY a'
             inserted = self.emit_cli(query)
             self.assertEqual(
                 inserted,
@@ -204,7 +203,7 @@ class DateTimeTimezonesTestCase(BaseTestCase):
         timestamp = 1500010800 - int(offset)
 
         with patch_env_tz('Asia/Novosibirsk'):
-            with self.create_table(self.table_columns()):
+            with self.create_stream(self.table_columns()):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', [(self.dt, )]
                 )
@@ -213,7 +212,7 @@ class DateTimeTimezonesTestCase(BaseTestCase):
                     "INSERT INTO test (a) VALUES ('2017-07-14 05:40:00')"
                 )
 
-                query = 'SELECT toInt32(a) FROM test'
+                query = 'SELECT to_int32(a) FROM test'
                 inserted = self.emit_cli(query)
                 self.assertEqual(inserted, '{ts}\n{ts}\n'.format(ts=timestamp))
 
@@ -235,7 +234,7 @@ class DateTimeTimezonesTestCase(BaseTestCase):
         settings = {'use_client_time_zone': True}
 
         with patch_env_tz('Asia/Novosibirsk'):
-            with self.create_table(self.table_columns()):
+            with self.create_stream(self.table_columns()):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', [(self.dt, )],
                     settings=settings
@@ -246,7 +245,7 @@ class DateTimeTimezonesTestCase(BaseTestCase):
                     use_client_time_zone=1
                 )
 
-                query = 'SELECT toInt32(a) FROM test'
+                query = 'SELECT to_int32(a) FROM test'
                 inserted = self.emit_cli(query, use_client_time_zone=1)
                 # 1499985600 = 1500000000 - 4 * 3600
                 self.assertEqual(inserted, '1499985600\n1499985600\n')
@@ -261,7 +260,7 @@ class DateTimeTimezonesTestCase(BaseTestCase):
                 inserted = self.client.execute(query, settings=settings)
                 self.assertEqual(inserted, [(self.dt, ), (self.dt, )])
 
-    @require_server_version(1, 1, 54337)
+    # @require_server_version(1, 1, 54337)
     def test_datetime_with_timezone_use_server_timezone(self):
         # Insert datetime with timezone Asia/Kamchatka
         # into column with no timezone
@@ -271,17 +270,17 @@ class DateTimeTimezonesTestCase(BaseTestCase):
         offset = timezone(server_tz_name).utcoffset(self.dt)
 
         with patch_env_tz('Asia/Novosibirsk'):
-            with self.create_table(self.table_columns()):
+            with self.create_stream(self.table_columns()):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', [(self.dt_tz, )]
                 )
 
                 self.emit_cli(
                     "INSERT INTO test (a) VALUES "
-                    "(toDateTime('2017-07-14 05:40:00', 'Asia/Kamchatka'))",
+                    "(to_datetime('2017-07-14 05:40:00', 'Asia/Kamchatka'))",
                 )
 
-                query = 'SELECT toInt32(a) FROM test'
+                query = 'SELECT to_int32(a) FROM test'
                 inserted = self.emit_cli(query)
                 # 1499967600 = 1500000000 - 12 * 3600
                 self.assertEqual(inserted, '1499967600\n1499967600\n')
@@ -295,7 +294,7 @@ class DateTimeTimezonesTestCase(BaseTestCase):
                 inserted = self.client.execute(query)
                 self.assertEqual(inserted, [(dt, ), (dt, )])
 
-    @require_server_version(1, 1, 54337)
+    # @require_server_version(1, 1, 54337)
     def test_datetime_with_timezone_use_client_timezone(self):
         # Insert datetime with timezone Asia/Kamchatka
         # into column with no timezone
@@ -304,7 +303,7 @@ class DateTimeTimezonesTestCase(BaseTestCase):
         settings = {'use_client_time_zone': True}
 
         with patch_env_tz('Asia/Novosibirsk'):
-            with self.create_table(self.table_columns()):
+            with self.create_stream(self.table_columns()):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', [(self.dt_tz, )],
                     settings=settings
@@ -312,11 +311,11 @@ class DateTimeTimezonesTestCase(BaseTestCase):
 
                 self.emit_cli(
                     "INSERT INTO test (a) VALUES "
-                    "(toDateTime('2017-07-14 05:40:00', 'Asia/Kamchatka'))",
+                    "(to_datetime('2017-07-14 05:40:00', 'Asia/Kamchatka'))",
                     use_client_time_zone=1
                 )
 
-                query = 'SELECT toInt32(a) FROM test'
+                query = 'SELECT to_int32(a) FROM test'
                 inserted = self.emit_cli(query, use_client_time_zone=1)
                 # 1499967600 = 1500000000 - 12 * 3600
                 self.assertEqual(inserted, '1499967600\n1499967600\n')
@@ -334,14 +333,14 @@ class DateTimeTimezonesTestCase(BaseTestCase):
                 dt = datetime(2017, 7, 14, 0, 40)
                 self.assertEqual(inserted, [(dt, ), (dt, )])
 
-    @require_server_version(1, 1, 54337)
+    # @require_server_version(1, 1, 54337)
     def test_column_use_server_timezone(self):
         # Insert datetime with no timezone
         # into column with timezone Asia/Novosibirsk
         # using server's timezone (Europe/Moscow)
 
         with patch_env_tz('Europe/Moscow'):
-            with self.create_table(self.table_columns(with_tz=True)):
+            with self.create_stream(self.table_columns(with_tz=True)):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', [(self.dt, )]
                 )
@@ -350,7 +349,7 @@ class DateTimeTimezonesTestCase(BaseTestCase):
                     "INSERT INTO test (a) VALUES ('2017-07-14 05:40:00')"
                 )
 
-                query = 'SELECT toInt32(a) FROM test'
+                query = 'SELECT to_int32(a) FROM test'
                 inserted = self.emit_cli(query)
                 # 1499985600 = 1500000000 - 4 * 3600
                 self.assertEqual(inserted, '1499985600\n1499985600\n')
@@ -368,7 +367,7 @@ class DateTimeTimezonesTestCase(BaseTestCase):
                     (self.col_tz.localize(self.dt), )
                 ])
 
-    @require_server_version(1, 1, 54337)
+    # @require_server_version(1, 1, 54337)
     def test_column_use_client_timezone(self):
         # Insert datetime with no timezone
         # into column with timezone Asia/Novosibirsk
@@ -377,7 +376,7 @@ class DateTimeTimezonesTestCase(BaseTestCase):
         settings = {'use_client_time_zone': True}
 
         with patch_env_tz('Europe/Moscow'):
-            with self.create_table(self.table_columns(with_tz=True)):
+            with self.create_stream(self.table_columns(with_tz=True)):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', [(self.dt, )],
                     settings=settings
@@ -387,7 +386,7 @@ class DateTimeTimezonesTestCase(BaseTestCase):
                     use_client_time_zone=1
                 )
 
-                query = 'SELECT toInt32(a) FROM test'
+                query = 'SELECT to_int32(a) FROM test'
                 inserted = self.emit_cli(query, use_client_time_zone=1)
                 # 1499985600 = 1500000000 - 4 * 3600
                 self.assertEqual(inserted, '1499985600\n1499985600\n')
@@ -405,24 +404,24 @@ class DateTimeTimezonesTestCase(BaseTestCase):
                     (self.col_tz.localize(self.dt), )
                 ])
 
-    @require_server_version(1, 1, 54337)
+    # @require_server_version(1, 1, 54337)
     def test_datetime_with_timezone_column_use_server_timezone(self):
         # Insert datetime with timezone Asia/Kamchatka
         # into column with timezone Asia/Novosibirsk
         # using server's timezone (Europe/Moscow)
 
         with patch_env_tz('Europe/Moscow'):
-            with self.create_table(self.table_columns(with_tz=True)):
+            with self.create_stream(self.table_columns(with_tz=True)):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', [(self.dt_tz, )]
                 )
 
                 self.emit_cli(
                     "INSERT INTO test (a) VALUES "
-                    "(toDateTime('2017-07-14 05:40:00', 'Asia/Kamchatka'))",
+                    "(to_datetime('2017-07-14 05:40:00', 'Asia/Kamchatka'))",
                 )
 
-                query = 'SELECT toInt32(a) FROM test'
+                query = 'SELECT to_int32(a) FROM test'
                 inserted = self.emit_cli(query)
                 # 1499967600 = 1500000000 - 12 * 3600
                 self.assertEqual(inserted, '1499967600\n1499967600\n')
@@ -443,7 +442,7 @@ class DateTimeTimezonesTestCase(BaseTestCase):
                     (self.col_tz.localize(dt), )
                 ])
 
-    @require_server_version(1, 1, 54337)
+    # @require_server_version(1, 1, 54337)
     def test_datetime_with_timezone_column_use_client_timezone(self):
         # Insert datetime with timezone Asia/Kamchatka
         # into column with timezone Asia/Novosibirsk
@@ -452,7 +451,7 @@ class DateTimeTimezonesTestCase(BaseTestCase):
         settings = {'use_client_time_zone': True}
 
         with patch_env_tz('Europe/Moscow'):
-            with self.create_table(self.table_columns(with_tz=True)):
+            with self.create_stream(self.table_columns(with_tz=True)):
                 self.client.execute(
                     'INSERT INTO test (a) VALUES', [(self.dt_tz, )],
                     settings=settings
@@ -460,11 +459,11 @@ class DateTimeTimezonesTestCase(BaseTestCase):
 
                 self.emit_cli(
                     "INSERT INTO test (a) VALUES "
-                    "(toDateTime('2017-07-14 05:40:00', 'Asia/Kamchatka'))",
+                    "(to_datetime('2017-07-14 05:40:00', 'Asia/Kamchatka'))",
                     use_client_time_zone=1
                 )
 
-                query = 'SELECT toInt32(a) FROM test'
+                query = 'SELECT to_int32(a) FROM test'
                 inserted = self.emit_cli(query, use_client_time_zone=1)
                 # 1499967600 = 1500000000 - 12 * 3600
                 self.assertEqual(inserted, '1499967600\n1499967600\n')
@@ -488,7 +487,7 @@ class DateTimeTimezonesTestCase(BaseTestCase):
 
 class DateTime64TimezonesTestCase(DateTimeTimezonesTestCase):
     dt_type = 'DateTime64'
-    required_server_version = (20, 1, 2)
+    # required_server_version = (20, 1, 2)
 
     def table_columns(self, with_tz=False):
         if not with_tz:

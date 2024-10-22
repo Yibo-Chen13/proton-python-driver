@@ -17,7 +17,7 @@ class CommonTestCase(BaseTestCase):
         self.client.connection.send_data = send_data
 
     def test_insert_block_size(self):
-        with self.create_table('a UInt8'):
+        with self.create_stream('a uint8'):
             data = [(x, ) for x in range(4)]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data
@@ -33,7 +33,7 @@ class CommonTestCase(BaseTestCase):
             self.assertEqual(inserted, data)
 
     def test_columnar_insert_block_size(self):
-        with self.create_table('a UInt8'):
+        with self.create_stream('a uint8'):
             data = [(0, 1, 2, 3)]
             self.client.execute(
                 'INSERT INTO test (a) VALUES', data, columnar=True

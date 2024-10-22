@@ -80,7 +80,7 @@ class SettingTestCase(BaseTestCase):
         self.client.execute('SELECT 1', settings=settings)
 
     # DBMS_MIN_REVISION_WITH_SETTINGS_SERIALIZED_AS_STRINGS is 20.1.2+
-    @require_server_version(20, 1, 2)
+    # @require_server_version(20, 1, 2)
     def test_unknown_setting_is_important(self):
         # In case of rev >=
         # DBMS_MIN_REVISION_WITH_SETTINGS_SERIALIZED_AS_STRINGS and setting
