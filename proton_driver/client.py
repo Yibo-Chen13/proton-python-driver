@@ -608,7 +608,7 @@ class Client(object):
 
         For example::
 
-            proton://[user:password]@localhost:9000/default
+            proton://[user:password]@localhost:8463/default
             protons://[user:password]@localhost:9440/default
 
         Three URL schemes are supported:
