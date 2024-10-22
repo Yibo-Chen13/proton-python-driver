@@ -73,6 +73,6 @@ def create_string_column(spec, column_options):
         cls = NumpyByteStringColumn if strings_as_bytes else NumpyStringColumn
         return cls(encoding=encoding, **column_options)
     else:
-        length = int(spec[12:-1])
+        length = int(spec[13:-1])
         cls = NumpyByteFixedString if strings_as_bytes else NumpyFixedString
         return cls(length, encoding=encoding, **column_options)
