@@ -4,7 +4,7 @@ from .arraycolumn import create_array_column
 
 def create_nested_column(spec, column_by_spec_getter):
     return create_array_column(
-        'Array(Tuple({}))'.format(','.join(get_nested_columns(spec))),
+        'array(tuple({}))'.format(','.join(get_nested_columns(spec))),
         column_by_spec_getter=column_by_spec_getter
     )
 
@@ -58,7 +58,7 @@ def get_columns_with_types(spec):
 
 def get_inner_spec(spec):
     brackets = 0
-    offset = len('Nested')
+    offset = len('nested')
     i = offset
     for i, ch in enumerate(spec[offset:], offset):
         if ch == '(':
