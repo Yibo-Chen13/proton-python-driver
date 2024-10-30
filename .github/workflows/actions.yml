@@ -6,14 +6,10 @@ jobs:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     permissions:
-      contents: write  # 提供创建/更新 Release 所需权限
       id-token: write  # IMPORTANT: mandatory for trusted publishing
     strategy:
       matrix:
         os: [ ubuntu-20.04 , windows-2019, macos-12 ]
-        environment: 
-          - name: pypi
-            url: https://pypi.org/p/proton-driver1  # Replace <package-name> with your PyPI project name
     steps:
       - uses: actions/checkout@v4
       - name: Get proton-python-driver tag
@@ -55,18 +51,9 @@ jobs:
           tag_name: ${{ join(steps.*.outputs.tag_name, '') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
-      - name: Store the distribution packages
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-package-distributions
-          path: wheelhouse/*.whl
-          retention-days: 1
-  
-      - name: Download all the dists
-        uses: actions/download-artifact@v4
-        with:
-          name: python-package-distributions
-          path: dist/
+      
       - name: Publish distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        run: |
+          pip install twine
+          python -m twine upload --repository-url https://pypi.org/p/proton-driver1 wheelhouse/*.whl
       
