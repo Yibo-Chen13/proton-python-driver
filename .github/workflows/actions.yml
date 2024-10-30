@@ -6,7 +6,8 @@ jobs:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     permissions:
-        id-token: write  # IMPORTANT: mandatory for trusted publishing
+      contents: write  # 提供创建/更新 Release 所需权限
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
     strategy:
       matrix:
         os: [ ubuntu-20.04 , windows-2019, macos-12 ]
