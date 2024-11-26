@@ -1,5 +1,5 @@
 from tests.testcase import BaseTestCase
-
+from decimal import Decimal
 
 class MapTestCase(BaseTestCase):
     # required_server_version = (21, 1, 2)
@@ -22,7 +22,7 @@ class MapTestCase(BaseTestCase):
         return '\n'.join(items) + '\n'
 
     def test_simple(self):
-        with self.create_stream('a map(string, uint64)'):
+        with self.create_stream('a map(string, int)'):
             data = [
                 ({},),
                 ({'key1': 1}, ),
@@ -97,6 +97,25 @@ class MapTestCase(BaseTestCase):
                 "{'key1':[]}\n"
                 "{'key2':[1,2,3]}\n"
                 "{'key3':[1,1,1,1]}\n"
+            )
+            inserted = self.client.execute(query)
+            self.assertEqual(inserted, data)
+
+    def test_decimal(self):
+        with self.create_stream('a map(string, Decimal(9, 2))'):
+            data = [
+                ({'key1': Decimal('123.45')}, ),
+                ({'key2': Decimal('234.56')}, ),
+                ({'key3': Decimal('345.67')}, )
+            ]
+            self.client.execute('INSERT INTO test (a) VALUES', data)
+            query = 'SELECT * FROM test'
+            inserted = self.emit_cli(query)
+            self.assertEqual(
+                inserted,
+                "{'key1':123.45}\n"
+                "{'key2':234.56}\n"
+                "{'key3':345.67}\n"
             )
             inserted = self.client.execute(query)
             self.assertEqual(inserted, data)
